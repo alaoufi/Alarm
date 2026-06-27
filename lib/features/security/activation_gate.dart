@@ -256,7 +256,7 @@ class _ActivationScreenState extends State<_ActivationScreen> {
                   onLongPress: _ownerRecovery,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    child: Text('© مذكراتي',
+                    child: Text('© Alerts',
                         style: TextStyle(
                             color: scheme.outline, fontSize: 12)),
                   ),
