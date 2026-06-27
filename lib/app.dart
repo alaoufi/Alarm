@@ -26,7 +26,7 @@ class MudhakkaratiApp extends StatelessWidget {
         final lightScheme = useDynamic ? lightDynamic?.harmonized() : null;
         final darkScheme = useDynamic ? darkDynamic?.harmonized() : null;
         return MaterialApp(
-          title: 'Alarm',
+          title: 'Alerts',
           navigatorKey: appNavigatorKey,
           debugShowCheckedModeBanner: false,
           themeMode: settings.themeMode,
