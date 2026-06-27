@@ -36,14 +36,22 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK
-        run: flutter build apk --release
+      - name: Build release APKs (split per ABI)
+        run: flutter build apk --release --split-per-abi
 
-      - name: Upload APK artifact
+      - name: Prepare APKs
+        run: |
+          cd build/app/outputs/flutter-apk
+          # نسخة arm64 هي الأساسية (تعمل على ~99% من الهواتف الحديثة)،
+          # ونحافظ على اسم ثابت app-release.apk حتى لا يتغيّر رابط التنزيل.
+          cp app-arm64-v8a-release.apk app-release.apk
+          ls -lh app-*.apk
+
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: app-release-apks
+          path: build/app/outputs/flutter-apk/app-*-release.apk
           if-no-files-found: error
 
       - name: Publish to "latest" release
@@ -52,7 +60,12 @@ jobs:
           tag_name: latest
           name: أحدث نسخة APK
           body: |
-            ملف APK لأحدث نسخة من تطبيق "تنبيهات".
-            نزّله من قسم Assets بالأسفل وثبّته على هاتف أندرويد (8.0+).
-            بُني من الـ commit ${{ github.sha }}.
-          files: build/app/outputs/flutter-apk/app-release.apk
+            ملف APK لأحدث نسخة من تطبيق "Alerts".
+
+            • app-release.apk  → الأنسب لمعظم الهواتف (arm64-v8a) — حمّل هذا.
+            • app-armeabi-v7a-release.apk → لهواتف أندرويد القديمة جداً (32-bit).
+
+            ثبّته على هاتف أندرويد 8.0+. بُني من الـ commit ${{ github.sha }}.
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
