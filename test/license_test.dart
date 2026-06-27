@@ -10,7 +10,7 @@ import 'package:mudhakkarati/services/license_service.dart';
 Future<String> _signKey(
     SimpleKeyPair kp, String deviceId, int duration) async {
   final ed = Ed25519();
-  final msg = utf8.encode('MDKL1|$deviceId|$duration');
+  final msg = utf8.encode('UNIV1|$deviceId|$duration');
   final sig = await ed.sign(msg, keyPair: kp);
   final bytes = <int>[(duration >> 8) & 0xff, duration & 0xff, ...sig.bytes];
   return LicenseService.base32(bytes);
@@ -58,14 +58,14 @@ void main() {
       expect(dur, duration);
       final sig = decoded.sublist(2);
 
-      final goodMsg = utf8.encode('MDKL1|$deviceId|$dur');
+      final goodMsg = utf8.encode('UNIV1|$deviceId|$dur');
       expect(
         await ed.verify(goodMsg, signature: Signature(sig, publicKey: pub)),
         isTrue,
       );
 
       // جهاز مختلف ⇒ يفشل (مربوط بالجهاز، لا ينتقل).
-      final otherMsg = utf8.encode('MDKL1|ZZZZ2345EFGH6789|$dur');
+      final otherMsg = utf8.encode('UNIV1|ZZZZ2345EFGH6789|$dur');
       expect(
         await ed.verify(otherMsg, signature: Signature(sig, publicKey: pub)),
         isFalse,
@@ -79,7 +79,7 @@ void main() {
       );
 
       // تلاعب بالمدّة ⇒ الرسالة تختلف ⇒ يفشل.
-      final wrongDurMsg = utf8.encode('MDKL1|$deviceId|9999');
+      final wrongDurMsg = utf8.encode('UNIV1|$deviceId|9999');
       expect(
         await ed.verify(wrongDurMsg, signature: Signature(sig, publicKey: pub)),
         isFalse,

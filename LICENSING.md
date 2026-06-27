@@ -42,7 +42,7 @@
 ### كيف يُولّد التطبيق «رقم الجهاز»
 ```
 raw      = ANDROID_ID            (أو identifierForVendor على iOS)
-digest   = SHA-256( "mudhakkarati:" + raw )
+digest   = SHA-256( "alaoufi:" + raw )
 deviceId = Base32( digest[0..9] )            # 10 بايت ⇒ 16 حرفًا
 العرض    = تُجمَّع كل 4 أحرف بشرطة: XXXX-XXXX-XXXX-XXXX
 ```
