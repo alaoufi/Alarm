@@ -1,0 +1,22 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+# ملاحظة: pubspec.lock يُلتزم به للتطبيقات لتثبيت إصدارات الحزم المتحقَّق منها.
+
+# Android
+android/local.properties
+android/.gradle/
+android/app/debug
+android/app/profile
+android/app/release
+*.iml
+.idea/
+
+# Misc
+*.log
+.DS_Store

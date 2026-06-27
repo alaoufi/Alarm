@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Alaoufi Notes</string>
+    <string name="widget_title">Alaoufi Notes</string>
+    <string name="widget_add">إضافة ملاحظة سريعة +</string>
+    <string name="widget_empty">لا توجد ملاحظات بعد</string>
+</resources>

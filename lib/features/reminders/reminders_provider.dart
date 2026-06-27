@@ -1,0 +1,275 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+import '../../data/models/enums.dart';
+import '../../data/models/note.dart';
+import '../../data/models/reminder.dart';
+import '../../data/repositories/note_repository.dart';
+import '../../data/repositories/reminder_repository.dart';
+import '../../services/file_service.dart';
+import '../../services/notification_service.dart';
+
+/// عنصر عرض يجمع التذكير مع ملاحظته.
+class ReminderView {
+  final Reminder reminder;
+  final Note? note;
+  const ReminderView(this.reminder, this.note);
+}
+
+class RemindersProvider extends ChangeNotifier {
+  final ReminderRepository _repo;
+  final NoteRepository _notes;
+
+  RemindersProvider(this._repo, this._notes);
+
+  List<ReminderView> _items = [];
+  List<ReminderView> get items => _items;
+
+  /// إعادة جدولة ذاتية عند فتح التطبيق: تضمن أن كل تذكير نشط ما زال مجدولًا في
+  /// النظام (تُعيد جدولة ما قد يكون أُسقط بسبب تقييد البطارية/إيقاف التطبيق).
+  /// آمنة وعديمة الأثر الجانبيّ (نفس المعرّف يَستبدل الجدولة القائمة).
+  Future<void> ensureScheduled() async {
+    try {
+      final all = await _repo.getAll();
+      final now = DateTime.now();
+      for (final r in all) {
+        if (!r.isActive) continue;
+        // تذكيرات «مرّة واحدة» الفائتة لا يُعاد جدولتها (انتهت).
+        if (r.repeat == ReminderRepeat.once && r.time.isBefore(now)) continue;
+        String title = r.title ?? 'تذكير';
+        String body = '';
+        if (r.noteId != null) {
+          final note = await _notes.getNote(r.noteId!);
+          if (note == null || note.isDeleted) continue;
+          if (note.title.trim().isNotEmpty) title = note.title;
+          body = note.content;
+        }
+        await NotificationService.instance.schedule(r, title, body);
+      }
+    } catch (_) {
+      // لا يجب أن تُعطّل بدء التطبيق.
+    }
+  }
+
+  Future<void> refresh() async {
+    final reminders = await _repo.getAll();
+    final views = <ReminderView>[];
+    for (final r in reminders) {
+      if (r.isStandalone) {
+        // تنبيه مستقلّ (بلا ملاحظة) — يُعرض دائمًا.
+        views.add(ReminderView(r, null));
+        continue;
+      }
+      final note = await _notes.getNote(r.noteId!);
+      // نتجاهل تذكيرات الملاحظات المحذوفة نهائيًا.
+      if (note != null && !note.isDeleted) {
+        views.add(ReminderView(r, note));
+      }
+    }
+    _items = views;
+    notifyListeners();
+  }
+
+  /// إنشاء/تحديث تنبيه مستقلّ (غير مرتبط بملاحظة) بعنوان حرّ.
+  Future<void> setStandalone(
+    DateTime time,
+    ReminderRepeat repeat,
+    String title, {
+    ReminderImportance importance = ReminderImportance.high,
+    List<int> preAlerts = const [],
+    String location = '',
+    String attachmentPath = '',
+    int intervalDays = 0,
+    int doseCount = 0,
+    Reminder? existing,
+  }) async {
+    if (existing != null) {
+      await NotificationService.instance.cancel(existing.notificationId);
+      await _repo.delete(existing.id!);
+    }
+    final notifId = _uniqueId(await _existingIds());
+    final reminder = Reminder(
+      title: title.trim().isEmpty ? 'تنبيه' : title.trim(),
+      time: time,
+      repeat: repeat,
+      importance: importance,
+      preAlerts: preAlerts,
+      location: location,
+      attachmentPath: attachmentPath,
+      notificationId: notifId,
+      intervalDays: intervalDays,
+      doseCount: doseCount,
+    );
+    final id = await _repo.insert(reminder);
+    await NotificationService.instance.schedule(
+      reminder.copyWith(id: id),
+      reminder.title!,
+      '',
+    );
+    await refresh();
+  }
+
+  Future<Reminder?> getForNote(int noteId) => _repo.getForNote(noteId);
+  Future<List<Reminder>> getAllForNote(int noteId) =>
+      _repo.getAllForNote(noteId);
+
+  /// تذكير أسبوعي لملاحظة على **أيام محدّدة**: يُلغي تذكيرات الملاحظة السابقة،
+  /// ثم يُنشئ تذكيرًا أسبوعيًّا لكل يوم مختار. [weekdays] بقيم DateTime.weekday.
+  Future<void> setNoteWeekly(
+    Note note,
+    TimeOfDay tod,
+    Set<int> weekdays, {
+    ReminderImportance importance = ReminderImportance.high,
+  }) async {
+    // إلغاء وحذف كل تذكيرات الملاحظة الحالية.
+    final existing = await _repo.getAllForNote(note.id!);
+    for (final r in existing) {
+      await NotificationService.instance.cancel(r.notificationId);
+    }
+    await _repo.deleteForNote(note.id!);
+
+    final taken = await _existingIds();
+    final title = note.title.trim().isEmpty ? 'تذكير' : note.title.trim();
+    for (final wd in weekdays) {
+      final when = _nextWeekday(wd, tod);
+      final reminder = Reminder(
+        noteId: note.id!,
+        time: when,
+        repeat: ReminderRepeat.weekly,
+        importance: importance,
+        notificationId: _uniqueId(taken),
+      );
+      final id = await _repo.insert(reminder);
+      await NotificationService.instance
+          .schedule(reminder.copyWith(id: id), title, note.content);
+    }
+    await refresh();
+  }
+
+  /// تعيين (أو تحديث) تذكير لملاحظة وجدولته كإشعار محلي.
+  Future<void> setReminder(
+    Note note,
+    DateTime time,
+    ReminderRepeat repeat, {
+    ReminderImportance importance = ReminderImportance.high,
+    List<int> preAlerts = const [],
+  }) async {
+    // إلغاء القديم إن وُجد.
+    final existing = await _repo.getForNote(note.id!);
+    if (existing != null) {
+      await NotificationService.instance.cancel(existing.notificationId);
+      await _repo.delete(existing.id!);
+    }
+
+    final notifId = _uniqueId(await _existingIds());
+    final reminder = Reminder(
+      noteId: note.id!,
+      time: time,
+      repeat: repeat,
+      importance: importance,
+      preAlerts: preAlerts,
+      notificationId: notifId,
+    );
+    final id = await _repo.insert(reminder);
+    await NotificationService.instance.schedule(
+      reminder.copyWith(id: id),
+      note.title.isNotEmpty ? note.title : 'تذكير',
+      note.content,
+    );
+    await refresh();
+  }
+
+  /// تنبيه أسبوعي على **أيام محدّدة**: يُنشئ تذكيرًا أسبوعيًّا لكل يوم مختار
+  /// عند أقرب وقوع له بالوقت المطلوب. [weekdays] بقيم DateTime.weekday (1..7).
+  Future<void> setStandaloneWeekly(
+    String title,
+    TimeOfDay tod,
+    Set<int> weekdays, {
+    Reminder? existing,
+  }) async {
+    if (existing != null) {
+      await NotificationService.instance.cancel(existing.notificationId);
+      await _repo.delete(existing.id!);
+    }
+    final name = title.trim().isEmpty ? 'تنبيه' : title.trim();
+    final taken = await _existingIds();
+    for (final wd in weekdays) {
+      final when = _nextWeekday(wd, tod);
+      final reminder = Reminder(
+        title: name,
+        time: when,
+        repeat: ReminderRepeat.weekly,
+        notificationId: _uniqueId(taken),
+      );
+      final id = await _repo.insert(reminder);
+      await NotificationService.instance
+          .schedule(reminder.copyWith(id: id), name, '');
+    }
+    await refresh();
+  }
+
+  /// أقرب تاريخ مستقبلي ليومٍ من الأسبوع [weekday] عند الوقت [tod].
+  DateTime _nextWeekday(int weekday, TimeOfDay tod) {
+    final now = DateTime.now();
+    var d = DateTime(now.year, now.month, now.day, tod.hour, tod.minute);
+    while (d.weekday != weekday || !d.isAfter(now)) {
+      d = DateTime(d.year, d.month, d.day + 1, tod.hour, tod.minute);
+    }
+    return d;
+  }
+
+  /// تفعيل/إيقاف منبّه دون حذفه (يجدول الإشعار أو يلغيه).
+  Future<void> setActive(ReminderView v, bool active) async {
+    final r = v.reminder;
+    if (active) {
+      final title = r.isStandalone
+          ? (r.title ?? 'تنبيه')
+          : (v.note?.title.isNotEmpty == true ? v.note!.title : 'تذكير');
+      final body = r.isStandalone ? '' : (v.note?.content ?? '');
+      await NotificationService.instance
+          .schedule(r.copyWith(isActive: true), title, body);
+    } else {
+      await NotificationService.instance.cancel(r.notificationId);
+    }
+    await _repo.update(r.copyWith(isActive: active));
+    await refresh();
+  }
+
+  Future<void> removeReminder(Reminder reminder) async {
+    await NotificationService.instance.cancel(reminder.notificationId);
+    // احذف مرفق الدعوة المرتبط (إن وُجد) من القرص.
+    if (reminder.attachmentPath.isNotEmpty) {
+      await FileService.instance.deleteIfExists(reminder.attachmentPath);
+    }
+    await _repo.delete(reminder.id!);
+    await refresh();
+  }
+
+  Future<void> removeForNote(int noteId) async {
+    final all = await _repo.getAllForNote(noteId);
+    if (all.isEmpty) return;
+    for (final r in all) {
+      await NotificationService.instance.cancel(r.notificationId);
+    }
+    await _repo.deleteForNote(noteId);
+    await refresh();
+  }
+
+  // نطاق مضغوط (<2^26) كي تبقى معرّفات «عدم النسيان»/التنبيهات المسبقة
+  // (base + k·2^26) ضمن 32-بت. **مضمون عدم التصادم**: نتجنّب أي معرّف مستعمَل
+  // مسبقًا (يمنع ضياع تذكير بسبب تطابق نادر للأرقام العشوائية).
+  Future<Set<int>> _existingIds() async {
+    final all = await _repo.getAll();
+    return all.map((r) => r.notificationId).toSet();
+  }
+
+  int _uniqueId(Set<int> taken) {
+    int id;
+    do {
+      id = Random().nextInt(1 << 26) + 1;
+    } while (taken.contains(id));
+    taken.add(id);
+    return id;
+  }
+}

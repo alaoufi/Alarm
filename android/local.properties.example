@@ -1,0 +1,6 @@
+# Rename this file to "local.properties" and adjust the paths to match your machine.
+# Android Studio normally creates this file automatically when you open the project.
+sdk.dir=/path/to/Android/sdk
+flutter.sdk=/path/to/flutter
+flutter.versionName=1.0.0
+flutter.versionCode=1

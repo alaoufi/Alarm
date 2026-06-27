@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  نمنع نسخ/نقل بيانات التطبيق عبر آلية أندرويد (سحابة/نقل بين الأجهزة) لأن
+  التخزين الآمن (مفتاح تشفير القاعدة) مرتبط بـ Keystore الجهاز ولا يُنقل، فيؤدي
+  الاسترجاع إلى مفتاح غير متطابق وفقدان الوصول للبيانات. للتطبيق نظام نسخ خاصّ.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+    </device-transfer>
+</data-extraction-rules>
