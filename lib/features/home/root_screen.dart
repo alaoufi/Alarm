@@ -6,8 +6,8 @@ import '../../services/notification_service.dart';
 import '../../services/sync/sync_service.dart';
 import '../editor/rich_text_field.dart';
 import '../reminders/reminders_provider.dart';
+import '../reminders/reminders_screen.dart';
 import '../settings/settings_provider.dart';
-import 'home_screen.dart';
 import 'notes_provider.dart';
 
 /// الجذر: يهيّئ البيانات ثم يعرض الصفحة الرئيسية (التي تحوي القائمة الجانبية).
@@ -149,6 +149,7 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
     });
   }
 
+  // التطبيق مخصّص للتنبيهات فقط: الشاشة الرئيسية هي قائمة التنبيهات مباشرةً.
   @override
-  Widget build(BuildContext context) => const HomeScreen();
+  Widget build(BuildContext context) => const RemindersScreen();
 }

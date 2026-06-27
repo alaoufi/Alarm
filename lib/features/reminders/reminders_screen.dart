@@ -13,6 +13,7 @@ import '../../widgets/ui_kit.dart';
 import '../editor/editor_attachments.dart';
 import '../editor/note_editor_screen.dart';
 import '../meds/medication_screen.dart';
+import '../settings/settings_screen.dart';
 import '../sounds/sound_library_screen.dart';
 import 'notification_center_screen.dart';
 import 'reliability_test_screen.dart';
@@ -37,13 +38,20 @@ class RemindersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final provider = context.watch<RemindersProvider>();
-    final standalone =
-        provider.items.where((v) => v.reminder.isStandalone).toList();
-    final noteLinked =
-        provider.items.where((v) => !v.reminder.isStandalone).toList();
+    // ترتيب التنبيهات: المُفعَّلة أولًا، ثم الأقرب موعدًا.
+    final items = [...provider.items]..sort((a, b) {
+        final aOn = a.reminder.isActive, bOn = b.reminder.isActive;
+        if (aOn != bOn) return aOn ? -1 : 1;
+        return _nextFire(a.reminder).compareTo(_nextFire(b.reminder));
+      });
 
     return Scaffold(
       appBar: gradientAppBar(context, s.t('reminders'), actions: [
+        IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          tooltip: s.t('settings'),
+          onPressed: () => _open(context, const SettingsScreen()),
+        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.settings),
           tooltip: s.t('reminder_tools'),
@@ -84,20 +92,13 @@ class RemindersScreen extends StatelessWidget {
         icon: const Icon(Icons.add_alarm),
         label: const Text('تنبيه جديد'),
       ),
-      body: provider.items.isEmpty
+      body: items.isEmpty
           ? _empty(context, s)
           : ListView(
-              padding: const EdgeInsets.fromLTRB(0, 8, 0, 90),
+              padding: const EdgeInsets.fromLTRB(0, 10, 0, 96),
               children: [
-                _nextBanner(context, provider.items),
-                if (standalone.isNotEmpty) ...[
-                  _header(context, '⏰ تنبيهات مستقلّة'),
-                  for (final v in standalone) _tile(context, s, provider, v),
-                ],
-                if (noteLinked.isNotEmpty) ...[
-                  _header(context, '📝 تنبيهات الملاحظات'),
-                  for (final v in noteLinked) _tile(context, s, provider, v),
-                ],
+                _nextBanner(context, items),
+                for (final v in items) _tile(context, s, provider, v),
               ],
             ),
     );
@@ -154,14 +155,8 @@ class RemindersScreen extends StatelessWidget {
     );
   }
 
-  Widget _header(BuildContext context, String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-        child: Text(text,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold)),
-      );
-
+  /// بطاقة تنبيه ثلاثية الأبعاد: تدرّج لوني + ظلال متعدّدة الطبقات (عمق وارتفاع)
+  /// + شارة منبّه دائرية بارزة. المُفعَّل يلمع بلون السمة، والمنتهي/المطفأ باهت.
   Widget _tile(BuildContext context, S s, RemindersProvider provider,
       ReminderView v) {
     final r = v.reminder;
@@ -171,7 +166,9 @@ class RemindersScreen extends StatelessWidget {
     final expired =
         r.repeat == ReminderRepeat.once && r.time.isBefore(DateTime.now());
     final dim = !on || expired;
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
     final timeStr = DateFormat('h:mm a', 'ar').format(r.time);
     final label = r.isStandalone
         ? (r.title?.isNotEmpty == true ? r.title! : 'تنبيه')
@@ -189,92 +186,251 @@ class RemindersScreen extends StatelessWidget {
     }
     if (r.doseCount > 0) repeatInfo += ' • ${r.doseCount} جرعة';
 
-    return AppCard(
-      onTap: r.isStandalone
-          ? () => showStandaloneReminderDialog(context, existing: r)
-          : () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => NoteEditorScreen(noteId: note!.id),
-                ),
+    // ألوان التدرّج والشارة حسب الحالة.
+    final accent = dim ? scheme.outline : scheme.primary;
+    final surface = scheme.surface;
+    final gradTop = dim
+        ? Color.alphaBlend(scheme.outline.withOpacity(0.06), surface)
+        : Color.alphaBlend(scheme.primary.withOpacity(0.16), surface);
+    final gradBottom = dim
+        ? Color.alphaBlend(scheme.outline.withOpacity(0.12), surface)
+        : Color.alphaBlend(scheme.primary.withOpacity(0.04), surface);
+
+    final onTap = r.isStandalone
+        ? () => showStandaloneReminderDialog(context, existing: r)
+        : () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NoteEditorScreen(noteId: note!.id),
               ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
-        child: Row(
-          children: [
-            Expanded(
+            );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 7, 14, 7),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [gradTop, gradBottom],
+          ),
+          border: Border.all(
+            color: Colors.white.withOpacity(dark ? 0.06 : 0.65),
+            width: 1,
+          ),
+          boxShadow: [
+            // ظلّ عميق أسفل-يمين يمنح الارتفاع.
+            BoxShadow(
+              color: Colors.black.withOpacity(dark ? 0.55 : 0.16),
+              blurRadius: 18,
+              offset: const Offset(0, 9),
+            ),
+            // وهج لوني للمُفعَّل.
+            if (!dim)
+              BoxShadow(
+                color: scheme.primary.withOpacity(dark ? 0.32 : 0.22),
+                blurRadius: 22,
+                spreadRadius: -4,
+                offset: const Offset(0, 6),
+              ),
+            // إضاءة علوية خفيفة (حافة لامعة).
+            BoxShadow(
+              color: Colors.white.withOpacity(dark ? 0.05 : 0.7),
+              blurRadius: 2,
+              spreadRadius: -1,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    timeStr,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: dim ? scheme.outline : null,
-                          decoration:
-                              expired ? TextDecoration.lineThrough : null,
+                  Row(
+                    children: [
+                      _alarmBadge(scheme, dim, expired, dark),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              timeStr,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: dim ? scheme.outline : scheme.onSurface,
+                                decoration: expired
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.5,
+                                color: dim
+                                    ? scheme.outline
+                                    : scheme.onSurface.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                      Switch(
+                        value: on,
+                        onChanged: (val) => provider.setActive(v, val),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    expired
-                        ? '$label  •  $repeatInfo  •  ${s.t('nc_expired')}'
-                        : '$label  •  $repeatInfo',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: dim
-                            ? scheme.outline
-                            : Theme.of(context).hintColor),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _chip(scheme, accent,
+                          expired ? Icons.history_toggle_off : Icons.repeat,
+                          expired ? s.t('nc_expired') : repeatInfo),
+                      const Spacer(),
+                      if (r.location.trim().isNotEmpty)
+                        _miniAction(
+                          icon: Icons.place_outlined,
+                          color: accent,
+                          tooltip: 'فتح الموقع',
+                          onPressed: () async {
+                            final u = Uri.tryParse(r.location.trim());
+                            if (u == null) return;
+                            try {
+                              await launchUrl(u,
+                                  mode: LaunchMode.externalApplication);
+                            } catch (_) {/* لا تطبيق يفتح الرابط */}
+                          },
+                        ),
+                      if (r.attachmentPath.trim().isNotEmpty)
+                        _miniAction(
+                          icon: r.attachmentPath.toLowerCase().endsWith('.pdf')
+                              ? Icons.picture_as_pdf_outlined
+                              : Icons.image_outlined,
+                          color: accent,
+                          tooltip: 'الدعوة',
+                          onPressed: () =>
+                              EditorAttachments.openFile(r.attachmentPath),
+                        ),
+                      _miniAction(
+                        icon: Icons.delete_outline,
+                        color: scheme.error,
+                        tooltip: 'حذف',
+                        onPressed: () async {
+                          if (await confirmDelete(context,
+                              title: 'حذف التنبيه؟',
+                              message:
+                                  'سيُحذف هذا التنبيه ولن يُذكّرك بعد الآن.')) {
+                            await provider.removeReminder(r);
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            // فتح موقع الموعد على الخرائط (إن وُجد رابط).
-            if (r.location.trim().isNotEmpty)
-              IconButton(
-                tooltip: 'فتح الموقع',
-                icon: Icon(Icons.place_outlined, color: scheme.primary),
-                onPressed: () async {
-                  final u = Uri.tryParse(r.location.trim());
-                  if (u == null) return;
-                  try {
-                    await launchUrl(u, mode: LaunchMode.externalApplication);
-                  } catch (_) {/* لا يوجد تطبيق يفتح الرابط */}
-                },
-              ),
-            // فتح مرفق الدعوة (صورة/PDF) إن وُجد.
-            if (r.attachmentPath.trim().isNotEmpty)
-              IconButton(
-                tooltip: 'الدعوة',
-                icon: Icon(
-                    r.attachmentPath.toLowerCase().endsWith('.pdf')
-                        ? Icons.picture_as_pdf_outlined
-                        : Icons.image_outlined,
-                    color: scheme.primary),
-                onPressed: () => EditorAttachments.openFile(r.attachmentPath),
-              ),
-            IconButton(
-              tooltip: 'حذف',
-              icon: Icon(Icons.delete_outline, color: scheme.outline),
-              onPressed: () async {
-                if (await confirmDelete(context,
-                    title: 'حذف التنبيه؟',
-                    message: 'سيُحذف هذا التنبيه ولن يُذكّرك بعد الآن.')) {
-                  await provider.removeReminder(r);
-                }
-              },
-            ),
-            Switch(
-              value: on,
-              onChanged: (val) => provider.setActive(v, val),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  /// شارة منبّه دائرية بارزة (ثلاثية الأبعاد) بتدرّج وظلّ ملوّن.
+  Widget _alarmBadge(
+      ColorScheme scheme, bool dim, bool expired, bool dark) {
+    final c1 = dim ? scheme.outline : scheme.primary;
+    final c2 = dim ? scheme.outlineVariant : scheme.tertiary;
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [c1, c2],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: c2.withOpacity(dim ? 0.25 : 0.5),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(dark ? 0.10 : 0.45),
+            blurRadius: 2,
+            spreadRadius: -2,
+            offset: const Offset(-2, -2),
+          ),
+        ],
+      ),
+      child: Icon(
+        expired
+            ? Icons.alarm_off_rounded
+            : (dim ? Icons.notifications_off_rounded : Icons.alarm_on_rounded),
+        color: Colors.white,
+        size: 27,
+      ),
+    );
+  }
+
+  /// شريحة معلومات صغيرة (التكرار/الحالة).
+  Widget _chip(ColorScheme scheme, Color accent, IconData icon, String text) =>
+      Flexible(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: accent.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: accent),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: accent),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _miniAction({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) =>
+      IconButton(
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+        tooltip: tooltip,
+        icon: Icon(icon, color: color, size: 21),
+        onPressed: onPressed,
+      );
 
   // ===== مساعدات =====
 
