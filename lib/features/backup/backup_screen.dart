@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 
 import '../../core/l10n/app_strings.dart';
 import '../../services/backup_service.dart';
-import '../../services/easynotes_import.dart';
 import '../../widgets/ui_kit.dart';
 import '../home/notes_provider.dart';
 import '../reminders/reminders_provider.dart';
@@ -397,68 +396,6 @@ class _BackupScreenState extends State<BackupScreen> {
     _toast(result.message);
   }
 
-  Future<void> _importEasyNotes() async {
-    final provider = context.read<NotesProvider>();
-
-    // اختيار وضع الاستيراد: حذف الحالي ثم استيراد، أو دمج، أو إلغاء.
-    final mode = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(S.of(context).t('bk_import_easy')),
-        content: Text(
-            S.of(context).t('bk_easy_q')+'\n\n'
-            '• '+S.of(context).t('bk_easy_replace')+'\n'
-            '• '+S.of(context).t('bk_easy_merge')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(S.of(context).t('cancel')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'merge'),
-            child: Text(S.of(context).t('bk_merge')),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
-            onPressed: () => Navigator.pop(context, 'replace'),
-            child: Text(S.of(context).t('bk_replace_import')),
-          ),
-        ],
-      ),
-    );
-    if (mode == null) return;
-
-    final picked = await FilePicker.platform.pickFiles(
-      type: FileType.any,
-      withData: true,
-    );
-    if (picked == null || picked.files.isEmpty) return;
-
-    var bytes = picked.files.single.bytes;
-    final path = picked.files.single.path;
-    if (bytes == null && path != null) {
-      bytes = await File(path).readAsBytes();
-    }
-    if (bytes == null) {
-      _toast(S.of(context).t('bk_read_fail'));
-      return;
-    }
-
-    setState(() => _busy = true);
-    if (mode == 'replace') {
-      await provider.notes.deleteAllNotes();
-    }
-    final result =
-        await EasyNotesImporter(provider.notes, provider.categoriesRepo)
-            .importBackup(bytes);
-    setState(() => _busy = false);
-    _toast(result.message);
-
-    if (result.success && mounted) {
-      await provider.init();
-    }
-  }
-
   // ---- النسخ الاحتياطي التلقائي ----
 
   Future<void> _toggleAuto(bool value) async {
@@ -646,17 +583,6 @@ class _BackupScreenState extends State<BackupScreen> {
                   subtitle: Text(
                       S.of(context).t('bk_verify_desc')),
                   onTap: _busy ? null : _verifyBackup,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                child: ListTile(
-                  leading: const Icon(Icons.move_to_inbox),
-                  title: Text(S.of(context).t('bk_import_easy')),
-                  subtitle: Text(
-                      S.of(context).t('bk_import_easy_desc')),
-                  onTap: _busy ? null : _importEasyNotes,
                 ),
               ),
               const SizedBox(height: 16),
