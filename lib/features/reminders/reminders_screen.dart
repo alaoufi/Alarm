@@ -15,6 +15,7 @@ import '../../widgets/confirm_dialog.dart';
 import '../../widgets/ui_kit.dart';
 import '../editor/editor_attachments.dart';
 import '../editor/note_editor_screen.dart';
+import '../help/help_guide_screen.dart';
 import '../meds/medication_screen.dart';
 import '../settings/settings_screen.dart';
 import '../sounds/sound_library_screen.dart';
@@ -151,6 +152,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     case 'reliability_test':
                       _open(context, const ReliabilityTestScreen());
                       break;
+                    case 'user_guide':
+                      _open(context, const HelpGuideScreen());
+                      break;
                   }
                 },
                 itemBuilder: (context) => [
@@ -168,6 +172,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       s.t('sound_library')),
                   _menuItem('reliability_test',
                       Icons.health_and_safety_outlined, s.t('reliability_test')),
+                  _menuItem('user_guide', Icons.menu_book_outlined,
+                      s.t('user_guide')),
                 ],
               ),
             ]),

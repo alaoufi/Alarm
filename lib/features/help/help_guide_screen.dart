@@ -3,10 +3,46 @@ import 'package:flutter/material.dart';
 import '../../core/l10n/app_strings.dart';
 import 'help_guide_data.dart';
 
+/// عناوين «الفهرس» لكل لغة (مع رجوع للإنجليزية).
+const Map<String, String> _indexTitles = {
+  'ar': 'الفهرس',
+  'en': 'Index',
+  'es': 'Índice',
+  'de': 'Index',
+  'fr': 'Index',
+  'it': 'Indice',
+  'id': 'Indeks',
+  'ms': 'Indeks',
+  'fil': 'Indeks',
+  'hi': 'सूची',
+  'bn': 'সূচি',
+  'fa': 'فهرست',
+  'ru': 'Содержание',
+};
+
 /// شاشة «دليل الاستخدام» التفاعلية ثلاثية الأبعاد — محتواها **مترجَم لكل لغة**
-/// (يتبع اللغة المختارة، مع رجوع للإنجليزية عند غياب الترجمة).
-class HelpGuideScreen extends StatelessWidget {
+/// (يتبع اللغة المختارة، مع رجوع للإنجليزية عند غياب الترجمة). تبدأ بفهرس
+/// قابل للنقر ينقل مباشرةً إلى أي قسم.
+class HelpGuideScreen extends StatefulWidget {
   const HelpGuideScreen({super.key});
+
+  @override
+  State<HelpGuideScreen> createState() => _HelpGuideScreenState();
+}
+
+class _HelpGuideScreenState extends State<HelpGuideScreen> {
+  List<GlobalKey> _keys = const [];
+
+  void _jumpTo(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      alignment: 0.08,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +51,9 @@ class HelpGuideScreen extends StatelessWidget {
     final lang = S.of(context).locale.languageCode;
     final chrome = helpChrome(lang);
     final sections = helpSections(lang);
+    if (_keys.length != sections.length) {
+      _keys = List.generate(sections.length, (_) => GlobalKey());
+    }
 
     return Scaffold(
       body: CustomScrollView(
@@ -28,9 +67,20 @@ class HelpGuideScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 6, 14, 28),
             sliver: SliverList.list(
               children: [
-                for (final sec in sections)
-                  _SectionCard(
-                      section: sec, dark: dark, itemsLabel: chrome.items),
+                _IndexCard(
+                  title: _indexTitles[lang] ?? _indexTitles['en']!,
+                  sections: sections,
+                  dark: dark,
+                  onTap: (i) => _jumpTo(_keys[i]),
+                ),
+                for (var i = 0; i < sections.length; i++)
+                  KeyedSubtree(
+                    key: _keys[i],
+                    child: _SectionCard(
+                        section: sections[i],
+                        dark: dark,
+                        itemsLabel: chrome.items),
+                  ),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(chrome.updated,
@@ -42,6 +92,125 @@ class HelpGuideScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// فهرس ثلاثيّ الأبعاد: شريحة لكل قسم بلونه وأيقونته — نقرة تنقل إليه.
+class _IndexCard extends StatelessWidget {
+  final String title;
+  final List<HgSection> sections;
+  final bool dark;
+  final ValueChanged<int> onTap;
+  const _IndexCard(
+      {required this.title,
+      required this.sections,
+      required this.dark,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final surface = dark ? const Color(0xFF1E2230) : Colors.white;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            surface,
+            Color.alphaBlend(scheme.primary.withOpacity(0.06), surface),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(dark ? 0.45 : 0.12),
+              offset: const Offset(0, 10),
+              blurRadius: 24,
+              spreadRadius: -6),
+          BoxShadow(
+              color: Colors.white.withOpacity(dark ? 0.04 : 0.9),
+              offset: const Offset(-3, -3),
+              blurRadius: 8),
+        ],
+        border: Border.all(color: scheme.primary.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _Icon3D(icon: Icons.list_alt, accent: scheme.primary, size: 40),
+              const SizedBox(width: 12),
+              Text(title,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      color: scheme.onSurface)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < sections.length; i++)
+                _IndexChip(
+                    section: sections[i], dark: dark, onTap: () => onTap(i)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IndexChip extends StatelessWidget {
+  final HgSection section;
+  final bool dark;
+  final VoidCallback onTap;
+  const _IndexChip(
+      {required this.section, required this.dark, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                section.color.withOpacity(dark ? 0.30 : 0.14),
+                section.color.withOpacity(dark ? 0.16 : 0.07),
+              ],
+            ),
+            border: Border.all(color: section.color.withOpacity(0.40)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(section.icon, size: 17, color: section.color),
+              const SizedBox(width: 7),
+              Text(section.title,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.8,
+                      color: scheme.onSurface)),
+            ],
+          ),
+        ),
       ),
     );
   }
