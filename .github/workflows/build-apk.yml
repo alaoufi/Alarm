@@ -36,10 +36,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # رقم نسخة متصاعد لكل بناء (1.0.<رقم التشغيل>) كي يكتشف التحديث الداخليّ
+      # توفّر نسخة أحدث ويقارن بالاسم بشكل صحيح.
       - name: Build release APKs (split per ABI)
-        run: flutter build apk --release --split-per-abi
+        run: |
+          flutter build apk --release --split-per-abi \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
 
-      - name: Prepare APKs
+      - name: Prepare APKs and version manifest
         run: |
           cd build/app/outputs/flutter-apk
           # اسم ملفّ واضح للتطبيق: Alerts.apk (نسخة arm64 لمعظم الهواتف الحديثة)،
@@ -47,6 +52,15 @@ jobs:
           cp app-arm64-v8a-release.apk Alerts.apk
           cp app-armeabi-v7a-release.apk Alerts-arm32.apk
           ls -lh Alerts*.apk
+          # بيان النسخة للتحديث الداخليّ.
+          cat > version.json <<EOF
+          {
+            "version": "1.0.${{ github.run_number }}",
+            "build": ${{ github.run_number }},
+            "url": "https://github.com/alaoufi/Alarm/releases/download/latest/Alerts.apk"
+          }
+          EOF
+          cat version.json
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
@@ -61,7 +75,7 @@ jobs:
           tag_name: latest
           name: أحدث نسخة APK
           body: |
-            ملف APK لأحدث نسخة من تطبيق "Alerts".
+            ملف APK لأحدث نسخة من تطبيق "Alerts" (1.0.${{ github.run_number }}).
 
             • Alerts.apk  → الأنسب لمعظم الهواتف (arm64-v8a) — حمّل هذا.
             • Alerts-arm32.apk → لهواتف أندرويد القديمة جداً (32-bit).
@@ -70,3 +84,4 @@ jobs:
           files: |
             build/app/outputs/flutter-apk/Alerts.apk
             build/app/outputs/flutter-apk/Alerts-arm32.apk
+            build/app/outputs/flutter-apk/version.json

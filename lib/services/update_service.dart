@@ -31,15 +31,16 @@ class UpdateService {
   UpdateService._();
   static final instance = UpdateService._();
 
-  // مصادر ملفّ النسخة (نُجرّبها بالترتيب): raw قد يُحجب على بعض شبكات الجوال، و
-  // jsDelivr (CDN عالميّ يعكس GitHub) يعمل غالبًا حيث يُحجب raw.
+  // مصادر ملفّ النسخة (نُجرّبها بالترتيب): مرفق الإصدار عبر github.com أوثقها
+  // (يتبع التحويلات)، ثم raw/jsDelivr من فرع main كاحتياط.
   static const List<String> _versionUrls = [
-    'https://raw.githubusercontent.com/alaoufi/alaoufi_notes/apk-dist-alarm/version.json',
-    'https://cdn.jsdelivr.net/gh/alaoufi/alaoufi_notes@apk-dist-alarm/version.json',
+    'https://github.com/alaoufi/Alarm/releases/download/latest/version.json',
+    'https://raw.githubusercontent.com/alaoufi/Alarm/main/version.json',
+    'https://cdn.jsdelivr.net/gh/alaoufi/Alarm@main/version.json',
   ];
   // تنزيل الـAPK من Releases عبر github.com (أوثق من raw، ويتبع التحويلات).
   static const _fallbackApk =
-      'https://github.com/alaoufi/alaoufi_notes/releases/download/alarm-latest/app-arm64-v8a-release.apk';
+      'https://github.com/alaoufi/Alarm/releases/download/latest/Alerts.apk';
 
   /// رابط تنزيل أحدث APK مباشرةً (مسار احتياطيّ عبر المتصفّح حين يتعذّر الفحص/التثبيت
   /// داخل التطبيق — يعمل ما دام المتصفّح يصل إلى github.com).
@@ -137,7 +138,7 @@ class UpdateService {
         final can = await _installer.invokeMethod<bool>('canInstall') ?? false;
         if (!can) {
           await _installer.invokeMethod('openInstallSettings');
-          return 'فعّل «السماح بتثبيت تطبيقات غير معروفة» لمذكراتي ثم اضغط تحديث مرّة أخرى.';
+          return 'فعّل «السماح بتثبيت تطبيقات غير معروفة» لتطبيق Alerts ثم اضغط تحديث مرّة أخرى.';
         }
         final ok =
             await _installer.invokeMethod<bool>('install', {'path': file.path}) ??
