@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_strings.dart';
 import '../../services/license_service.dart';
 import '../../services/security_service.dart';
 import '../../widgets/ui_kit.dart';
+import '../reminders/reminders_provider.dart';
 import 'pin_entry.dart';
 
 class SecuritySettingsScreen extends StatefulWidget {
@@ -111,6 +113,34 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     if (ok == true) await _load();
   }
 
+  /// «التنبيهات فقط»: يحوّل تنبيهات الملاحظات إلى مستقلّة (دون فقدها) ثم يحذف كل
+  /// الملاحظات المستورَدة التي لا تُعرض في هذا التطبيق.
+  Future<void> _purgeNotes() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('حذف الملاحظات المستورَدة'),
+        content: const Text(
+            'هذا التطبيق للتنبيهات فقط. سيتم حذف كل الملاحظات المستورَدة (التي '
+            'لا تظهر هنا) مع الحفاظ على جميع تنبيهاتك. لا يمكن التراجع.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('إلغاء')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('حذف الملاحظات')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<RemindersProvider>();
+    final removed = await provider.detachAndPurgeNotes();
+    messenger.showSnackBar(
+        SnackBar(content: Text('تم حذف $removed ملاحظة. تنبيهاتك محفوظة.')));
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -203,6 +233,17 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                 ],
               ),
             ),
+          AppCard(
+            child: ListTile(
+              leading: Icon(Icons.cleaning_services_outlined,
+                  color: scheme.error),
+              title: const Text('حذف الملاحظات المستورَدة',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text(
+                  'تطبيق التنبيهات فقط: يحذف الملاحظات غير المعروضة ويُبقي تنبيهاتك.'),
+              onTap: _purgeNotes,
+            ),
+          ),
         ],
       ),
     );

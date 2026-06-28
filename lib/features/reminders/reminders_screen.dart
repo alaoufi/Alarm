@@ -314,26 +314,46 @@ class _RemindersScreenState extends State<RemindersScreen> {
       'later': '⏳ لاحقًا',
       'stopped': '🔕 متوقّف / منتهٍ',
     };
+    // لون مميّز لكل مجال زمنيّ.
+    const colors = {
+      'today': Color(0xFF00897B), // أخضر مزرقّ
+      'tomorrow': Color(0xFF1E88E5), // أزرق
+      'week': Color(0xFF8E24AA), // بنفسجي
+      'later': Color(0xFFF57C00), // برتقالي
+      'stopped': Color(0xFF9E9E9E), // رمادي
+    };
     final out = <Widget>[];
     for (final key in groups.keys) {
       final list = groups[key]!;
       if (list.isEmpty) continue;
-      out.add(_groupHeader(context, '${titles[key]}  (${list.length})'));
+      final accent = colors[key]!;
+      out.add(_groupHeader(context, '${titles[key]}  (${list.length})', accent));
       for (final v in list) {
-        out.add(_tile(context, s, provider, v));
+        out.add(_tile(context, s, provider, v, accent));
       }
     }
     return out;
   }
 
-  Widget _groupHeader(BuildContext context, String text) => Padding(
+  Widget _groupHeader(BuildContext context, String text, Color accent) =>
+      Padding(
         padding: const EdgeInsets.fromLTRB(22, 14, 22, 4),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              text,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: accent,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ],
         ),
       );
 
@@ -356,10 +376,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
         ),
       );
 
-  /// بطاقة تنبيه ثلاثية الأبعاد: تدرّج لوني + ظلال متعدّدة الطبقات (عمق وارتفاع)
-  /// + شارة منبّه دائرية بارزة. المُفعَّل يلمع بلون السمة، والمنتهي/المطفأ باهت.
+  /// بطاقة تنبيه مدمجة بلون المجال الزمنيّ (شريط جانبي + شارة + تدرّج خفيف).
+  /// إجراءات الحذف/الموقع/المرفق عبر الضغط المطوّل لإبقاء البطاقة صغيرة.
   Widget _tile(BuildContext context, S s, RemindersProvider provider,
-      ReminderView v) {
+      ReminderView v, Color accent) {
     final r = v.reminder;
     final note = v.note;
     final on = r.isActive;
@@ -383,15 +403,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
     if (r.doseCount > 0) repeatInfo += ' • ${r.doseCount} جرعة';
 
-    // ألوان التدرّج والشارة حسب الحالة.
-    final accent = dim ? scheme.outline : scheme.primary;
     final surface = scheme.surface;
-    final gradTop = dim
-        ? Color.alphaBlend(scheme.outline.withOpacity(0.06), surface)
-        : Color.alphaBlend(scheme.primary.withOpacity(0.16), surface);
-    final gradBottom = dim
-        ? Color.alphaBlend(scheme.outline.withOpacity(0.12), surface)
-        : Color.alphaBlend(scheme.primary.withOpacity(0.04), surface);
+    final gradTop = Color.alphaBlend(accent.withOpacity(0.18), surface);
+    final gradBottom = Color.alphaBlend(accent.withOpacity(0.05), surface);
 
     final onTap = r.isStandalone
         ? () => showStandaloneReminderDialog(context, existing: r)
@@ -403,140 +417,100 @@ class _RemindersScreenState extends State<RemindersScreen> {
             );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 7, 14, 7),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [gradTop, gradBottom],
           ),
-          border: Border.all(
-            color: Colors.white.withOpacity(dark ? 0.06 : 0.65),
-            width: 1,
+          border: BorderDirectional(
+            start: BorderSide(color: accent, width: 4),
           ),
           boxShadow: [
-            // ظلّ عميق أسفل-يمين يمنح الارتفاع.
             BoxShadow(
-              color: Colors.black.withOpacity(dark ? 0.55 : 0.16),
-              blurRadius: 18,
-              offset: const Offset(0, 9),
+              color: Colors.black.withOpacity(dark ? 0.45 : 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-            // وهج لوني للمُفعَّل.
             if (!dim)
               BoxShadow(
-                color: scheme.primary.withOpacity(dark ? 0.32 : 0.22),
-                blurRadius: 22,
+                color: accent.withOpacity(dark ? 0.28 : 0.16),
+                blurRadius: 12,
                 spreadRadius: -4,
-                offset: const Offset(0, 6),
+                offset: const Offset(0, 4),
               ),
-            // إضاءة علوية خفيفة (حافة لامعة).
-            BoxShadow(
-              color: Colors.white.withOpacity(dark ? 0.05 : 0.7),
-              blurRadius: 2,
-              spreadRadius: -1,
-              offset: const Offset(0, -2),
-            ),
           ],
         ),
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
             onTap: onTap,
             onLongPress: () => _showActions(context, s, provider, v),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsetsDirectional.fromSTEB(10, 8, 6, 8),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      _alarmBadge(scheme, dim, expired, dark),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  _alarmBadge(accent, dim, expired, dark),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
                           children: [
                             Text(
                               timeStr,
-                              style: theme.textTheme.headlineSmall?.copyWith(
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
                                 color: dim ? scheme.outline : scheme.onSurface,
                                 decoration: expired
                                     ? TextDecoration.lineThrough
                                     : null,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.5,
-                                color: dim
-                                    ? scheme.outline
-                                    : scheme.onSurface.withOpacity(0.9),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: _chip(
+                                accent,
+                                expired
+                                    ? Icons.history_toggle_off
+                                    : Icons.repeat,
+                                expired ? s.t('nc_expired') : repeatInfo,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      Switch(
-                        value: on,
-                        onChanged: (val) => provider.setActive(v, val),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12.5,
+                            color: dim
+                                ? scheme.outline
+                                : scheme.onSurface.withOpacity(0.85),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      _chip(scheme, accent,
-                          expired ? Icons.history_toggle_off : Icons.repeat,
-                          expired ? s.t('nc_expired') : repeatInfo),
-                      const Spacer(),
-                      if (r.location.trim().isNotEmpty)
-                        _miniAction(
-                          icon: Icons.place_outlined,
-                          color: accent,
-                          tooltip: 'فتح الموقع',
-                          onPressed: () async {
-                            final u = Uri.tryParse(r.location.trim());
-                            if (u == null) return;
-                            try {
-                              await launchUrl(u,
-                                  mode: LaunchMode.externalApplication);
-                            } catch (_) {/* لا تطبيق يفتح الرابط */}
-                          },
-                        ),
-                      if (r.attachmentPath.trim().isNotEmpty)
-                        _miniAction(
-                          icon: r.attachmentPath.toLowerCase().endsWith('.pdf')
-                              ? Icons.picture_as_pdf_outlined
-                              : Icons.image_outlined,
-                          color: accent,
-                          tooltip: 'الدعوة',
-                          onPressed: () =>
-                              EditorAttachments.openFile(r.attachmentPath),
-                        ),
-                      _miniAction(
-                        icon: Icons.delete_outline,
-                        color: scheme.error,
-                        tooltip: 'حذف',
-                        onPressed: () async {
-                          if (await confirmDelete(context,
-                              title: 'حذف التنبيه؟',
-                              message:
-                                  'سيُحذف هذا التنبيه ولن يُذكّرك بعد الآن.')) {
-                            await provider.removeReminder(r);
-                          }
-                        },
-                      ),
-                    ],
+                  if (r.location.trim().isNotEmpty)
+                    Icon(Icons.place, size: 16, color: accent),
+                  if (r.attachmentPath.trim().isNotEmpty)
+                    Icon(Icons.attach_file, size: 16, color: accent),
+                  Transform.scale(
+                    scale: 0.85,
+                    child: Switch(
+                      value: on,
+                      onChanged: (val) => provider.setActive(v, val),
+                    ),
                   ),
                 ],
               ),
@@ -605,6 +579,30 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 _postpone(context, provider, v, tomorrowSame);
               },
             ),
+            if (r.location.trim().isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.place_outlined),
+                title: const Text('فتح الموقع'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final u = Uri.tryParse(r.location.trim());
+                  if (u == null) return;
+                  try {
+                    await launchUrl(u, mode: LaunchMode.externalApplication);
+                  } catch (_) {/* لا تطبيق يفتح الرابط */}
+                },
+              ),
+            if (r.attachmentPath.trim().isNotEmpty)
+              ListTile(
+                leading: Icon(r.attachmentPath.toLowerCase().endsWith('.pdf')
+                    ? Icons.picture_as_pdf_outlined
+                    : Icons.image_outlined),
+                title: const Text('فتح الدعوة/المرفق'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  EditorAttachments.openFile(r.attachmentPath);
+                },
+              ),
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.copy_all_outlined),
@@ -644,32 +642,24 @@ class _RemindersScreenState extends State<RemindersScreen> {
         .showSnackBar(SnackBar(content: Text('تم التأجيل إلى $at')));
   }
 
-  /// شارة منبّه دائرية بارزة (ثلاثية الأبعاد) بتدرّج وظلّ ملوّن.
-  Widget _alarmBadge(
-      ColorScheme scheme, bool dim, bool expired, bool dark) {
-    final c1 = dim ? scheme.outline : scheme.primary;
-    final c2 = dim ? scheme.outlineVariant : scheme.tertiary;
+  /// شارة منبّه دائرية مدمجة بلون المجال.
+  Widget _alarmBadge(Color accent, bool dim, bool expired, bool dark) {
+    final c2 = Color.alphaBlend(Colors.black.withOpacity(0.22), accent);
     return Container(
-      width: 54,
-      height: 54,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [c1, c2],
+          colors: [accent, c2],
         ),
         boxShadow: [
           BoxShadow(
-            color: c2.withOpacity(dim ? 0.25 : 0.5),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(dark ? 0.10 : 0.45),
-            blurRadius: 2,
-            spreadRadius: -2,
-            offset: const Offset(-2, -2),
+            color: accent.withOpacity(dim ? 0.2 : 0.45),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -678,53 +668,34 @@ class _RemindersScreenState extends State<RemindersScreen> {
             ? Icons.alarm_off_rounded
             : (dim ? Icons.notifications_off_rounded : Icons.alarm_on_rounded),
         color: Colors.white,
-        size: 27,
+        size: 22,
       ),
     );
   }
 
   /// شريحة معلومات صغيرة (التكرار/الحالة).
-  Widget _chip(ColorScheme scheme, Color accent, IconData icon, String text) =>
-      Flexible(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: accent.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: accent),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: accent),
-                ),
-              ),
-            ],
-          ),
+  Widget _chip(Color accent, IconData icon, String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+        decoration: BoxDecoration(
+          color: accent.withOpacity(0.14),
+          borderRadius: BorderRadius.circular(20),
         ),
-      );
-
-  Widget _miniAction({
-    required IconData icon,
-    required Color color,
-    required String tooltip,
-    required VoidCallback onPressed,
-  }) =>
-      IconButton(
-        visualDensity: VisualDensity.compact,
-        constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
-        tooltip: tooltip,
-        icon: Icon(icon, color: color, size: 21),
-        onPressed: onPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: accent),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w600, color: accent),
+              ),
+            ),
+          ],
+        ),
       );
 
   // ===== مساعدات =====

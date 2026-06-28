@@ -485,50 +485,11 @@ class BackupService {
 
       final raw = await File(path).readAsString();
       final decoded = jsonDecode(raw);
-      if (decoded is! Map || decoded['notes'] is! List) {
+      if (decoded is! Map) {
         return const BackupResult(false, 'الملف ليس بصيغة JSON صحيحة');
       }
 
-      final repo = NoteRepository(AppDatabase.instance);
-      final catRepo = CategoryRepository(AppDatabase.instance);
-
-      // إعادة ربط التصنيفات بالاسم (معرّف قديم ⇒ معرّف جديد).
-      final catMap = <int, int>{};
-      for (final c in (decoded['categories'] as List? ?? const [])) {
-        if (c is! Map) continue;
-        final oldId = c['id'] as int?;
-        final name = (c['name'] as String?)?.trim();
-        if (name == null || name.isEmpty) continue;
-        final newId = await catRepo.ensureByName(name,
-            color: c['color'] as int? ?? 0xFF9E9E9E,
-            iconCode: c['icon_code'] as int? ?? 0xe148);
-        if (oldId != null) catMap[oldId] = newId;
-      }
-
-      // المعرّفات الفريدة الموجودة (لتفادي التكرار).
-      final existing = (await repo.getEverything())
-          .map((n) => n.uuid)
-          .where((u) => u.isNotEmpty)
-          .toSet();
-
-      var added = 0;
-      for (final raw in (decoded['notes'] as List)) {
-        if (raw is! Map) continue;
-        final m = Map<String, dynamic>.from(raw);
-        final uuid = m['uuid'] as String?;
-        if (uuid != null && uuid.isNotEmpty && existing.contains(uuid)) {
-          continue; // مكرّرة ⇒ تخطٍّ.
-        }
-        m.remove('id');
-        final oldCat = m['category_id'] as int?;
-        m['category_id'] = oldCat == null ? null : catMap[oldCat];
-        final tags = (m.remove('tags') as List?)?.cast<String>() ?? const [];
-        await repo.insertNote(Note.fromMap(m, tags: tags));
-        if (uuid != null) existing.add(uuid);
-        added++;
-      }
-
-      // التنبيهات المستقلّة: تُضاف بمعرّف إشعار جديد، مع تخطّي المتطابق.
+      // تطبيق «التنبيهات فقط»: نستورد التنبيهات المستقلّة فقط ونتجاهل الملاحظات.
       var addedReminders = 0;
       final remList = decoded['reminders'];
       if (remList is List) {
@@ -552,11 +513,11 @@ class BackupService {
           existKeys.add(key(r0));
           addedReminders++;
         }
+      } else if (decoded['notes'] is! List) {
+        return const BackupResult(false, 'الملف لا يحتوي تنبيهات');
       }
 
-      final extra =
-          addedReminders > 0 ? ' و$addedReminders تنبيه' : '';
-      return BackupResult(true, 'تم استيراد $added ملاحظة$extra');
+      return BackupResult(true, 'تم استيراد $addedReminders تنبيه');
     } catch (e) {
       return BackupResult(false, 'فشل الاستيراد: $e');
     }

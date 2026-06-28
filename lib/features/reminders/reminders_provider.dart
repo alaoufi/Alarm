@@ -288,6 +288,43 @@ class RemindersProvider extends ChangeNotifier {
     await refresh();
   }
 
+  /// تطبيق «التنبيهات فقط»: يحوّل تنبيهات الملاحظات إلى تنبيهات مستقلّة (بحفظ
+  /// عنوان الملاحظة كعنوان للتنبيه) ثم يحذف كل الملاحظات. لا يُفقد أي تنبيه.
+  /// يعيد عدد الملاحظات المحذوفة.
+  Future<int> detachAndPurgeNotes() async {
+    final all = await _repo.getAll();
+    for (final r in all) {
+      if (r.noteId == null) continue;
+      final note = await _notes.getNote(r.noteId!);
+      var t = (note?.title.trim().isNotEmpty == true)
+          ? note!.title.trim()
+          : (note?.content.trim().isNotEmpty == true
+              ? note!.content.trim()
+              : 'تنبيه');
+      if (t.length > 80) t = t.substring(0, 80);
+      // إعادة بناء التنبيه مستقلًّا (copyWith لا يستطيع تصفير note_id).
+      final detached = Reminder(
+        id: r.id,
+        noteId: null,
+        title: t,
+        time: r.time,
+        repeat: r.repeat,
+        isActive: r.isActive,
+        importance: r.importance,
+        preAlerts: r.preAlerts,
+        location: r.location,
+        attachmentPath: r.attachmentPath,
+        notificationId: r.notificationId,
+        intervalDays: r.intervalDays,
+        doseCount: r.doseCount,
+      );
+      await _repo.update(detached);
+    }
+    final removed = await _notes.deleteAllNotes();
+    await refresh();
+    return removed;
+  }
+
   Future<void> removeForNote(int noteId) async {
     final all = await _repo.getAllForNote(noteId);
     if (all.isEmpty) return;
