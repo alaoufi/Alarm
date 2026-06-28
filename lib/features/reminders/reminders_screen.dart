@@ -92,15 +92,18 @@ class RemindersScreen extends StatelessWidget {
         icon: const Icon(Icons.add_alarm),
         label: const Text('تنبيه جديد'),
       ),
-      body: items.isEmpty
-          ? _empty(context, s)
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(0, 10, 0, 96),
-              children: [
-                _nextBanner(context, items),
-                for (final v in items) _tile(context, s, provider, v),
-              ],
-            ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 96),
+        children: [
+          _quickAddBar(context),
+          if (items.isEmpty)
+            _emptyInline(context, s)
+          else ...[
+            _nextBanner(context, items),
+            ..._groupedChildren(context, s, provider, items),
+          ],
+        ],
+      ),
     );
   }
 
@@ -154,6 +157,137 @@ class RemindersScreen extends StatelessWidget {
       ),
     );
   }
+
+  /// شريط الإضافة السريعة: أزرار تُنشئ تنبيهًا «مرّة واحدة» فورًا بنقرة.
+  Widget _quickAddBar(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget chip(IconData icon, String label, DateTime Function() when) =>
+        Padding(
+          padding: const EdgeInsetsDirectional.only(end: 8),
+          child: ActionChip(
+            avatar: Icon(icon, size: 18, color: scheme.primary),
+            label: Text(label),
+            onPressed: () => _quickAdd(context, when(), label),
+          ),
+        );
+    final now0 = DateTime.now();
+    return SizedBox(
+      height: 46,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        children: [
+          chip(Icons.bolt, 'بعد ١٠ د',
+              () => DateTime.now().add(const Duration(minutes: 10))),
+          chip(Icons.timelapse, 'بعد ٣٠ د',
+              () => DateTime.now().add(const Duration(minutes: 30))),
+          chip(Icons.hourglass_bottom, 'بعد ساعة',
+              () => DateTime.now().add(const Duration(hours: 1))),
+          chip(Icons.wb_sunny_outlined, 'غدًا ٨ص', () {
+            final t = now0.add(const Duration(days: 1));
+            return DateTime(t.year, t.month, t.day, 8);
+          }),
+          chip(Icons.nightlight_outlined, 'الليلة ٩م',
+              () => DateTime(now0.year, now0.month, now0.day, 21)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _quickAdd(
+      BuildContext context, DateTime time, String label) async {
+    // لو كان الوقت المحسوب قد فات (مثل «الليلة ٩م» بعد التاسعة) ⇒ انقله للغد.
+    var t = time;
+    if (!t.isAfter(DateTime.now())) t = t.add(const Duration(days: 1));
+    final provider = context.read<RemindersProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    await provider.setStandalone(t, ReminderRepeat.once, 'تنبيه سريع');
+    final at = DateFormat('h:mm a', 'ar').format(t);
+    messenger.showSnackBar(
+      SnackBar(content: Text('تم ضبط تنبيه ($label) عند $at')),
+    );
+  }
+
+  /// يجمع التنبيهات تحت عناوين زمنية: اليوم / غدًا / هذا الأسبوع / لاحقًا / متوقّف.
+  List<Widget> _groupedChildren(BuildContext context, S s,
+      RemindersProvider provider, List<ReminderView> items) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final groups = <String, List<ReminderView>>{
+      'today': [],
+      'tomorrow': [],
+      'week': [],
+      'later': [],
+      'stopped': [],
+    };
+    for (final v in items) {
+      final r = v.reminder;
+      final expired =
+          r.repeat == ReminderRepeat.once && r.time.isBefore(now);
+      if (!r.isActive || expired) {
+        groups['stopped']!.add(v);
+        continue;
+      }
+      final n = _nextFire(r);
+      final diff = DateTime(n.year, n.month, n.day).difference(today).inDays;
+      if (diff <= 0) {
+        groups['today']!.add(v);
+      } else if (diff == 1) {
+        groups['tomorrow']!.add(v);
+      } else if (diff <= 7) {
+        groups['week']!.add(v);
+      } else {
+        groups['later']!.add(v);
+      }
+    }
+    const titles = {
+      'today': '📅 اليوم',
+      'tomorrow': '🌅 غدًا',
+      'week': '🗓️ هذا الأسبوع',
+      'later': '⏳ لاحقًا',
+      'stopped': '🔕 متوقّف / منتهٍ',
+    };
+    final out = <Widget>[];
+    for (final key in groups.keys) {
+      final list = groups[key]!;
+      if (list.isEmpty) continue;
+      out.add(_groupHeader(context, '${titles[key]}  (${list.length})'));
+      for (final v in list) {
+        out.add(_tile(context, s, provider, v));
+      }
+    }
+    return out;
+  }
+
+  Widget _groupHeader(BuildContext context, String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(22, 14, 22, 4),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+      );
+
+  Widget _emptyInline(BuildContext context, S s) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+        child: Column(
+          children: [
+            Icon(Icons.notifications_off_outlined,
+                size: 64, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 16),
+            Text(s.t('no_reminders'),
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              'أضف تنبيهًا سريعًا من الأعلى، أو بزرّ «تنبيه جديد».',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Theme.of(context).hintColor),
+            ),
+          ],
+        ),
+      );
 
   /// بطاقة تنبيه ثلاثية الأبعاد: تدرّج لوني + ظلال متعدّدة الطبقات (عمق وارتفاع)
   /// + شارة منبّه دائرية بارزة. المُفعَّل يلمع بلون السمة، والمنتهي/المطفأ باهت.
@@ -483,10 +617,4 @@ class RemindersScreen extends StatelessWidget {
         ReminderRepeat.yearly => s.t('repeat_yearly'),
         ReminderRepeat.hijriYearly => s.t('repeat_hijri_yearly'),
       };
-
-  Widget _empty(BuildContext context, S s) => EmptyState(
-        icon: Icons.notifications_off_outlined,
-        title: s.t('no_reminders'),
-        subtitle: 'أنشئ تنبيهًا مستقلًّا بزرّ «تنبيه جديد»',
-      );
 }
