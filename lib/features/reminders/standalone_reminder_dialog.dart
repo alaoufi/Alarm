@@ -138,12 +138,16 @@ const List<(int, String)> _weekdayDefs = [
 ];
 
 /// حوار إنشاء/تعديل **تنبيه مستقلّ** (غير مرتبط بملاحظة): عنوان + وقت + تكرار + نغمة.
+/// [initialKind]/[initialTitle] لتهيئة الحوار من قالب جاهز (تنبيه جديد فقط).
 Future<void> showStandaloneReminderDialog(BuildContext context,
-    {Reminder? existing}) async {
+    {Reminder? existing,
+    ReminderKind? initialKind,
+    String? initialTitle}) async {
   final s = S.of(context);
   final provider = context.read<RemindersProvider>();
   final settings = context.read<SettingsProvider>();
-  final titleCtrl = TextEditingController(text: existing?.title ?? '');
+  final titleCtrl =
+      TextEditingController(text: existing?.title ?? initialTitle ?? '');
   DateTime date = existing?.time ?? DateTime.now().add(const Duration(hours: 1));
   TimeOfDay time = TimeOfDay.fromDateTime(date);
   ReminderRepeat repeat = existing?.repeat ?? ReminderRepeat.once;
@@ -179,6 +183,36 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                               _t0.contains('📅'))
                           ? ReminderKind.appointment
                           : ReminderKind.general;
+  // قالب جاهز: عيّن النوع وإعداداته الافتراضية لتنبيه جديد.
+  if (existing == null && initialKind != null) {
+    kind = initialKind;
+    switch (kind) {
+      case ReminderKind.medication:
+        repeat = ReminderRepeat.daily;
+        importance = ReminderImportance.critical;
+        break;
+      case ReminderKind.appointment:
+        importance = ReminderImportance.high;
+        preAlerts.add(60);
+        break;
+      case ReminderKind.occasion:
+        repeat = ReminderRepeat.yearly;
+        importance = ReminderImportance.medium;
+        break;
+      case ReminderKind.bills:
+        repeat = ReminderRepeat.monthly;
+        importance = ReminderImportance.high;
+        preAlerts.add(1440);
+        break;
+      case ReminderKind.travel:
+        importance = ReminderImportance.high;
+        preAlerts.add(1440);
+        break;
+      case ReminderKind.car:
+      case ReminderKind.general:
+        break;
+    }
+  }
   final doseCtrl = TextEditingController();
   // دواء: فاصل الأيام بين الجرعات (≥2 ⇒ «كل N يوم») + عدد جرعات الكورس (0 = مستمر).
   int intervalDays = existing?.intervalDays ?? 0;
@@ -483,6 +517,11 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             ),
                           ],
                         ),
+                      ),
+                      IconButton(
+                        tooltip: s.t('cancel'),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
                       ),
                     ]),
                   ),
