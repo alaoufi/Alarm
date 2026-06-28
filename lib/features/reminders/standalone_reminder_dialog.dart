@@ -664,7 +664,7 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             spacing: 8,
                             runSpacing: 6,
                             children: [
-                              for (final (lbl, when) in <(String, DateTime)>[
+                              for (final (lbl, at) in <(String, DateTime)>[
                                 (
                                   'بعد ساعة',
                                   DateTime.now().add(const Duration(hours: 1))
@@ -687,8 +687,8 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                       Icon(Icons.bolt, size: 16, color: accent),
                                   label: Text(lbl),
                                   onPressed: () => setState(() {
-                                    date = when;
-                                    time = TimeOfDay.fromDateTime(when);
+                                    date = at;
+                                    time = TimeOfDay.fromDateTime(at);
                                   }),
                                 ),
                             ],
