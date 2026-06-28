@@ -65,7 +65,7 @@ class SettingsScreen extends StatelessWidget {
                   context,
                   icon: Icons.palette_outlined,
                   title: s.t('appearance'),
-                  subtitle: 'الوضع، اللون، الخط، اللغة',
+                  subtitle: 'اللغة، الوضع، اللون، الخط',
                   initiallyExpanded: true,
                   children: _appearance(context, s, settings),
                 ),
@@ -207,6 +207,39 @@ class SettingsScreen extends StatelessWidget {
   // ===================== المظهر =====================
 
   List<Widget> _appearance(BuildContext context, S s, SettingsProvider st) => [
+        // اللغة — في الأعلى لسهولة الوصول، ببطاقة بارزة.
+        Container(
+          margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.55),
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.20),
+              ],
+            ),
+            border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.25)),
+          ),
+          child: ListTile(
+            leading: Icon(Icons.language,
+                color: Theme.of(context).colorScheme.primary),
+            title: Text(s.t('language'),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            trailing: DropdownButton<String>(
+              value: st.locale.languageCode,
+              underline: const SizedBox.shrink(),
+              items: [
+                for (final e in S.languages.entries)
+                  DropdownMenuItem(value: e.key, child: Text(e.value)),
+              ],
+              onChanged: (v) => st.setLocale(Locale(v ?? 'en')),
+            ),
+          ),
+        ),
+
         // الوضع (نهاري/ليلي/النظام)
         ListTile(
           leading: const Icon(Icons.brightness_6_outlined),
@@ -303,21 +336,6 @@ class SettingsScreen extends StatelessWidget {
               if (v != null) st.setFontFamily(v);
             },
             items: _fontDropdownItems(context),
-          ),
-        ),
-
-        // اللغة
-        ListTile(
-          leading: const Icon(Icons.language),
-          title: Text(s.t('language')),
-          trailing: DropdownButton<String>(
-            value: st.locale.languageCode,
-            underline: const SizedBox.shrink(),
-            items: [
-              for (final e in S.languages.entries)
-                DropdownMenuItem(value: e.key, child: Text(e.value)),
-            ],
-            onChanged: (v) => st.setLocale(Locale(v ?? 'en')),
           ),
         ),
       ];
