@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  /// ألوان السمة (Theme) المتاحة للاختيار من الإعدادات.
+  /// ألوان السمة (Theme) المتاحة للاختيار من الإعدادات — تدرّجات هادئة وأنيقة
+  /// يشتقّ منها النظام درجات فاتحة للخلفيات وداكنة للوضع الليلي.
   static const Map<String, Color> themeSeeds = {
     'أخضر زمردي': Color(0xFF2E7D6B),
     'أزرق هادئ': Color(0xFF3F6FB5),
@@ -12,6 +13,19 @@ class AppColors {
     'برتقالي دافئ': Color(0xFFE8772E),
     'وردي': Color(0xFFC2476B),
     'رمادي أنيق': Color(0xFF546E7A),
+    // تدرّجات إضافية ناعمة وجميلة.
+    'فيروزي': Color(0xFF159A8C),
+    'سماوي': Color(0xFF3FA7DD),
+    'نيليّ': Color(0xFF5C6BC0),
+    'خزاميّ': Color(0xFF9B6FD0),
+    'مرجانيّ': Color(0xFFEF6C57),
+    'كهرمانيّ': Color(0xFFD4A12A),
+    'برقوقيّ': Color(0xFF995C82),
+    'نعناعيّ': Color(0xFF3DB389),
+    'أزرق بترولي': Color(0xFF2D7C8A),
+    'زهريّ': Color(0xFFE389AC),
+    'تُوتيّ': Color(0xFF8E5BA6),
+    'عنّابيّ': Color(0xFFB14A57),
   };
 
   static const Color defaultSeed = Color(0xFF2E7D6B);
