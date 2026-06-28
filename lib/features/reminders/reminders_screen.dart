@@ -26,6 +26,7 @@ import 'reminder_templates_sheet.dart';
 import 'reminders_provider.dart';
 import 'standalone_reminder_dialog.dart';
 import 'today_dashboard_screen.dart';
+import 'voice_reminder.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -170,10 +171,24 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 ],
               ),
             ]),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showStandaloneReminderDialog(context),
-        icon: const Icon(Icons.add_alarm),
-        label: const Text('تنبيه جديد'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'voice_fab',
+            tooltip: 'تنبيه بالصوت',
+            onPressed: () => createReminderByVoice(context),
+            child: const Icon(Icons.mic),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'add_fab',
+            onPressed: () => showStandaloneReminderDialog(context),
+            icon: const Icon(Icons.add_alarm),
+            label: const Text('تنبيه جديد'),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 96),

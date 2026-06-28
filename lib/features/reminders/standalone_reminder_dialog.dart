@@ -199,13 +199,16 @@ const List<(int, String)> _weekdayDefs = [
 Future<void> showStandaloneReminderDialog(BuildContext context,
     {Reminder? existing,
     ReminderKind? initialKind,
-    String? initialTitle}) async {
+    String? initialTitle,
+    DateTime? initialTime}) async {
   final s = S.of(context);
   final provider = context.read<RemindersProvider>();
   final settings = context.read<SettingsProvider>();
   final titleCtrl =
       TextEditingController(text: existing?.title ?? initialTitle ?? '');
-  DateTime date = existing?.time ?? DateTime.now().add(const Duration(hours: 1));
+  DateTime date = existing?.time ??
+      initialTime ??
+      DateTime.now().add(const Duration(hours: 1));
   TimeOfDay time = TimeOfDay.fromDateTime(date);
   ReminderRepeat repeat = existing?.repeat ?? ReminderRepeat.once;
   // التنبيه المستقلّ منبّه «حقيقيّ» ⇒ نجعله حرجًا افتراضيًّا (شاشة كاملة +
