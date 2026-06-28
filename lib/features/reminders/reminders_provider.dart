@@ -222,13 +222,21 @@ class RemindersProvider extends ChangeNotifier {
   /// تفعيل/إيقاف منبّه دون حذفه (يجدول الإشعار أو يلغيه).
   Future<void> setActive(ReminderView v, bool active) async {
     final r = v.reminder;
+    // تنبيه «مرّة واحدة» فات وقته لا يمكن جدولته (وقت ماضٍ ⇒ تُرمى استثناء).
+    // نتخطّى الجدولة لكن نحفظ الحالة دائمًا كي يعمل المفتاح بلا تعطّل.
+    final isPastOnce =
+        r.repeat == ReminderRepeat.once && r.time.isBefore(DateTime.now());
     if (active) {
-      final title = r.isStandalone
-          ? (r.title ?? 'تنبيه')
-          : (v.note?.title.isNotEmpty == true ? v.note!.title : 'تذكير');
-      final body = r.isStandalone ? '' : (v.note?.content ?? '');
-      await NotificationService.instance
-          .schedule(r.copyWith(isActive: true), title, body);
+      if (!isPastOnce) {
+        final title = r.isStandalone
+            ? (r.title ?? 'تنبيه')
+            : (v.note?.title.isNotEmpty == true ? v.note!.title : 'تذكير');
+        final body = r.isStandalone ? '' : (v.note?.content ?? '');
+        try {
+          await NotificationService.instance
+              .schedule(r.copyWith(isActive: true), title, body);
+        } catch (_) {/* لا تمنع حفظ الحالة عند تعذّر الجدولة */}
+      }
     } else {
       await NotificationService.instance.cancel(r.notificationId);
     }
