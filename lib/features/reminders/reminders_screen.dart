@@ -124,65 +124,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 tooltip: s.t('language'),
                 onPressed: () => _pickLanguage(context),
               ),
-              IconButton(
-                icon: const Icon(Icons.settings_outlined),
-                tooltip: s.t('settings'),
-                onPressed: () => _open(context, const SettingsScreen()),
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                tooltip: s.t('reminder_tools'),
-                onSelected: (v) {
-                  switch (v) {
-                    case 'dashboard':
-                      _open(context, const TodayDashboardScreen());
-                      break;
-                    case 'templates':
-                      showReminderTemplates(context);
-                      break;
-                    case 'stats':
-                      _open(context, const ReminderStatsScreen());
-                      break;
-                    case 'med_mode':
-                      _open(context, const MedicationScreen());
-                      break;
-                    case 'reminder_defaults':
-                      _open(context, const ReminderDefaultsScreen());
-                      break;
-                    case 'notif_center':
-                      _open(context, const NotificationCenterScreen());
-                      break;
-                    case 'sound_library':
-                      _open(context, const SoundLibraryScreen());
-                      break;
-                    case 'reliability_test':
-                      _open(context, const ReliabilityTestScreen());
-                      break;
-                    case 'user_guide':
-                      _open(context, const HelpGuideScreen());
-                      break;
-                  }
-                },
-                itemBuilder: (context) => [
-                  _guideMenuItem(context, s.t('user_guide')),
-                  const PopupMenuDivider(),
-                  _menuItem('dashboard', Icons.dashboard_outlined, 'لوحة اليوم'),
-                  _menuItem('templates', Icons.dashboard_customize_outlined,
-                      'قوالب جاهزة'),
-                  _menuItem('stats', Icons.bar_chart, 'الإحصاءات'),
-                  _menuItem(
-                      'med_mode', Icons.medication_outlined, s.t('med_mode')),
-                  _menuItem('reminder_defaults', Icons.tune,
-                      s.t('reminder_defaults')),
-                  _menuItem('notif_center', Icons.notifications_active_outlined,
-                      s.t('notif_center')),
-                  _menuItem('sound_library', Icons.library_music_outlined,
-                      s.t('sound_library')),
-                  _menuItem('reliability_test',
-                      Icons.health_and_safety_outlined, s.t('reliability_test')),
-                ],
-              ),
             ]),
+      drawer: _buildDrawer(context, s),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -293,68 +236,235 @@ class _RemindersScreenState extends State<RemindersScreen> {
     );
   }
 
-  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) =>
-      PopupMenuItem<String>(
-        value: value,
-        child: Row(children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 12),
-          Text(label),
-        ]),
-      );
-
-  /// عنصر «دليل الاستخدام» بارز أعلى القائمة — بطاقة ملوّنة بأيقونة ثلاثية الأبعاد.
-  PopupMenuItem<String> _guideMenuItem(BuildContext context, String label) {
+  /// القائمة الجانبية (☰): رأس بهويّة التطبيق، ثم «دليل الاستخدام» بارز،
+  /// فمجموعة الأدوات، ثم الإعدادات — بتصميم عصريّ موحّد.
+  Widget _buildDrawer(BuildContext context, S s) {
     final scheme = Theme.of(context).colorScheme;
-    return PopupMenuItem<String>(
-      value: 'user_guide',
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              scheme.primary.withOpacity(0.18),
-              scheme.primary.withOpacity(0.06),
-            ],
-          ),
-          border: Border.all(color: scheme.primary.withOpacity(0.35)),
-        ),
-        child: Row(children: [
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    void go(Widget page) {
+      Navigator.pop(context); // إغلاق القائمة
+      _open(context, page);
+    }
+
+    return Drawer(
+      width: 308,
+      child: Column(
+        children: [
+          // رأس متدرّج بهويّة «تنبيهات».
           Container(
-            width: 34,
-            height: 34,
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
                 colors: [
                   scheme.primary,
-                  Color.alphaBlend(Colors.black.withOpacity(0.2), scheme.primary),
+                  Color.alphaBlend(Colors.black.withOpacity(0.22), scheme.primary),
                 ],
               ),
-              boxShadow: [
-                BoxShadow(
-                    color: scheme.primary.withOpacity(0.4),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2)),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFFFCA28), Color(0xFFFB8C00)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: const Icon(Icons.notifications_active,
+                          color: Colors.white, size: 30),
+                    ),
+                    const SizedBox(width: 14),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Alerts',
+                            style: TextStyle(
+                                color: scheme.onPrimary,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold)),
+                        Text('تنبيهات وتذكيرات',
+                            style: TextStyle(
+                                color: scheme.onPrimary.withOpacity(0.85),
+                                fontSize: 13)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+              children: [
+                // دليل الاستخدام — بارز.
+                _drawerFeatured(context, Icons.menu_book, s.t('user_guide'),
+                    () => go(const HelpGuideScreen())),
+                const SizedBox(height: 8),
+                _drawerLabel(context, s.t('reminder_tools')),
+                _drawerTile(context, Icons.dashboard_outlined, 'لوحة اليوم',
+                    () => go(const TodayDashboardScreen())),
+                _drawerTile(context, Icons.dashboard_customize_outlined,
+                    'قوالب جاهزة', () {
+                  Navigator.pop(context);
+                  showReminderTemplates(context);
+                }),
+                _drawerTile(context, Icons.bar_chart, 'الإحصاءات',
+                    () => go(const ReminderStatsScreen())),
+                _drawerTile(context, Icons.medication_outlined, s.t('med_mode'),
+                    () => go(const MedicationScreen())),
+                _drawerTile(context, Icons.tune, s.t('reminder_defaults'),
+                    () => go(const ReminderDefaultsScreen())),
+                _drawerTile(
+                    context,
+                    Icons.notifications_active_outlined,
+                    s.t('notif_center'),
+                    () => go(const NotificationCenterScreen())),
+                _drawerTile(context, Icons.library_music_outlined,
+                    s.t('sound_library'), () => go(const SoundLibraryScreen())),
+                _drawerTile(
+                    context,
+                    Icons.health_and_safety_outlined,
+                    s.t('reliability_test'),
+                    () => go(const ReliabilityTestScreen())),
+                const Divider(height: 22, indent: 12, endIndent: 12),
+                _drawerLabel(context, s.t('group_manage')),
+                _drawerTile(context, Icons.language, s.t('language'), () {
+                  Navigator.pop(context);
+                  _pickLanguage(context);
+                }),
+                _drawerTile(context, Icons.settings_outlined, s.t('settings'),
+                    () => go(const SettingsScreen())),
               ],
             ),
-            child: const Icon(Icons.menu_book, color: Colors.white, size: 19),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: scheme.primary)),
+          // تذييل: رقم النسخة بشكل خفيف.
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text('Alerts',
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: scheme.onSurface.withOpacity(dark ? 0.4 : 0.35))),
+            ),
           ),
-          Icon(Icons.chevron_left, color: scheme.primary.withOpacity(0.7)),
-        ]),
+        ],
+      ),
+    );
+  }
+
+  /// عنوان مجموعة صغير داخل القائمة الجانبية.
+  Widget _drawerLabel(BuildContext context, String text) => Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 6, 16, 6),
+        child: Text(text,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.3)),
+      );
+
+  /// عنصر قائمة جانبية عاديّ بأيقونة دائرية خفيفة.
+  Widget _drawerTile(
+      BuildContext context, IconData icon, String label, VoidCallback onTap) {
+    final scheme = Theme.of(context).colorScheme;
+    return ListTile(
+      dense: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: scheme.primary.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Icon(icon, size: 20, color: scheme.primary),
+      ),
+      title: Text(label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5)),
+      trailing: Icon(Icons.chevron_left,
+          size: 20, color: scheme.onSurface.withOpacity(0.35)),
+      onTap: onTap,
+    );
+  }
+
+  /// «دليل الاستخدام» بارز: بطاقة بتدرّج وأيقونة ثلاثية الأبعاد.
+  Widget _drawerFeatured(
+      BuildContext context, IconData icon, String label, VoidCallback onTap) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                scheme.primary.withOpacity(0.20),
+                scheme.primary.withOpacity(0.07),
+              ],
+            ),
+            border: Border.all(color: scheme.primary.withOpacity(0.35)),
+          ),
+          child: Row(children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    scheme.primary,
+                    Color.alphaBlend(
+                        Colors.black.withOpacity(0.2), scheme.primary),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                      color: scheme.primary.withOpacity(0.4),
+                      blurRadius: 7,
+                      offset: const Offset(0, 3)),
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: 23),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(label,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15.5,
+                      color: scheme.primary)),
+            ),
+            Icon(Icons.chevron_left, color: scheme.primary.withOpacity(0.7)),
+          ]),
+        ),
       ),
     );
   }
