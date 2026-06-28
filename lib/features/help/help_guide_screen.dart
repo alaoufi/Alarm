@@ -33,16 +33,28 @@ class HelpGuideScreen extends StatefulWidget {
 
 class _HelpGuideScreenState extends State<HelpGuideScreen> {
   List<GlobalKey> _keys = const [];
+  List<ExpansionTileController> _controllers = const [];
 
-  void _jumpTo(GlobalKey key) {
-    final ctx = key.currentContext;
-    if (ctx == null) return;
-    Scrollable.ensureVisible(
-      ctx,
-      duration: const Duration(milliseconds: 450),
-      curve: Curves.easeOutCubic,
-      alignment: 0.08,
-    );
+  /// نقرة الفهرس: تفتح القسم المطلوب ثم تنتقل إليه (لا مجرّد إبراز).
+  void _goTo(int i) {
+    if (i < _controllers.length) {
+      try {
+        _controllers[i].expand();
+      } catch (_) {
+        // قد يكون القسم غير مُركَّب بعد؛ نتجاهل ونكتفي بالتمرير.
+      }
+    }
+    // ننتظر إطار التوسعة قبل التمرير ليُحسب الموضع النهائيّ.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = i < _keys.length ? _keys[i].currentContext : null;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
+        alignment: 0.08,
+      );
+    });
   }
 
   @override
@@ -54,6 +66,8 @@ class _HelpGuideScreenState extends State<HelpGuideScreen> {
     final sections = helpSections(lang);
     if (_keys.length != sections.length) {
       _keys = List.generate(sections.length, (_) => GlobalKey());
+      _controllers =
+          List.generate(sections.length, (_) => ExpansionTileController());
     }
 
     return Scaffold(
@@ -72,7 +86,7 @@ class _HelpGuideScreenState extends State<HelpGuideScreen> {
                   title: _indexTitles[lang] ?? _indexTitles['en']!,
                   sections: sections,
                   dark: dark,
-                  onTap: (i) => _jumpTo(_keys[i]),
+                  onTap: _goTo,
                 ),
                 for (var i = 0; i < sections.length; i++)
                   KeyedSubtree(
@@ -80,7 +94,8 @@ class _HelpGuideScreenState extends State<HelpGuideScreen> {
                     child: _SectionCard(
                         section: sections[i],
                         dark: dark,
-                        itemsLabel: chrome.items),
+                        itemsLabel: chrome.items,
+                        controller: _controllers[i]),
                   ),
                 const SizedBox(height: 8),
                 Center(
@@ -322,8 +337,12 @@ class _SectionCard extends StatelessWidget {
   final HgSection section;
   final bool dark;
   final String itemsLabel;
+  final ExpansionTileController controller;
   const _SectionCard(
-      {required this.section, required this.dark, required this.itemsLabel});
+      {required this.section,
+      required this.dark,
+      required this.itemsLabel,
+      required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -357,6 +376,7 @@ class _SectionCard extends StatelessWidget {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          controller: controller,
           initiallyExpanded: section.expanded,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
@@ -418,7 +438,16 @@ class _ToolRow extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 12.8,
                         height: 1.4,
-                        color: scheme.onSurface.withOpacity(0.72))),
+                        fontWeight: FontWeight.w600,
+                        color: accent)),
+                if (item.detail.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  Text(item.detail,
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.5,
+                          color: scheme.onSurface.withOpacity(0.78))),
+                ],
               ],
             ),
           ),
