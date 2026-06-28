@@ -5,26 +5,21 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/l10n/app_strings.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/note_gradient.dart';
-import '../../data/models/enums.dart';
 import '../../services/ringtone_picker.dart';
 import '../../services/tone_preview.dart';
-import '../../widgets/color_picker_sheet.dart';
-import '../../widgets/confirm_dialog.dart';
-import '../../widgets/paper_background.dart';
-import '../home/notes_provider.dart';
+import '../../services/update_service.dart';
 import '../backup/backup_screen.dart';
 import '../backup/daily_backup_switch.dart';
-import '../categories/manage_categories_screen.dart';
-import '../reminders/reminders_screen.dart';
+import '../help/help_guide_screen.dart';
+import '../reminders/reminder_defaults_screen.dart';
+import '../reminders/reliability_test_screen.dart';
 import '../security/security_settings_screen.dart';
-import '../../services/update_service.dart';
-import '../trash/archive_screen.dart';
-import '../trash/trash_screen.dart';
+import '../sounds/sound_library_screen.dart';
 import 'settings_provider.dart';
 
-/// شاشة الإعدادات — تصميم عصري مجمّع: بطاقات بارزة (ثلاثية الأبعاد) قابلة للطيّ،
-/// كل مجموعة متشابهة في بطاقة واحدة لتنظيم أوضح.
+/// شاشة الإعدادات — مخصّصة لتطبيق التنبيهات: بطاقات بارزة ثلاثية الأبعاد قابلة
+/// للطيّ، مجمّعة في أربعة محاور واضحة (المظهر واللغة · التنبيهات والصوت ·
+/// الأمان والنسخ · حول ومساعدة).
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -71,43 +66,16 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _groupCard(
                   context,
-                  icon: Icons.sticky_note_2_outlined,
-                  title: 'الملاحظة الافتراضية',
-                  subtitle: 'شكل الملاحظات الجديدة',
-                  children: _noteDefaults(context, s, settings),
-                ),
-                _groupCard(
-                  context,
-                  icon: Icons.format_align_justify,
-                  title: 'تسطير الصفحة',
-                  subtitle: 'الخطوط خلف الكتابة',
-                  children: _noteRuling(context, s, settings),
-                ),
-                _groupCard(
-                  context,
-                  icon: Icons.build_outlined,
-                  title: 'أزرار شريط التنسيق',
-                  subtitle: 'اختر الأدوات الظاهرة في المحرّر',
-                  children: _toolbarButtons(context, s, settings),
-                ),
-                _groupCard(
-                  context,
-                  icon: Icons.edit_outlined,
-                  title: 'التحرير والعرض',
-                  subtitle: 'سلوك المحرّر وطريقة العرض',
-                  children: _editingDisplay(context, s, settings),
-                ),
-                _groupCard(
-                  context,
                   icon: Icons.notifications_active_outlined,
-                  title: 'التنبيهات',
-                  subtitle: 'نغمة التذكيرات',
-                  children: _notifications(context, s, settings),
+                  title: 'التنبيهات والصوت',
+                  subtitle: 'النغمة، رفع الصوت، الإعدادات الافتراضية',
+                  children: _remindersSound(context, s, settings),
                 ),
                 _groupCard(
                   context,
                   icon: Icons.shield_outlined,
                   title: 'الأمان والنسخ الاحتياطي',
+                  subtitle: 'القفل، النسخ، المزامنة السحابية',
                   children: [
                     const DailyBackupSwitch(),
                     _nav(context, Icons.lock_outline, s.t('security'),
@@ -119,23 +87,10 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _groupCard(
                   context,
-                  icon: Icons.folder_outlined,
-                  title: 'التنظيم',
-                  children: [
-                    _nav(context, Icons.category_outlined,
-                        s.t('manage_categories'),
-                        const ManageCategoriesScreen()),
-                    _nav(context, Icons.archive_outlined, s.t('archived'),
-                        const ArchiveScreen()),
-                    _nav(context, Icons.delete_outline, s.t('trash'),
-                        const TrashScreen()),
-                  ],
-                ),
-                _groupCard(
-                  context,
                   icon: Icons.info_outline,
-                  title: s.t('about'),
-                  children: _about(context, s),
+                  title: 'حول ومساعدة',
+                  subtitle: 'الإصدار، التحديث، الدليل',
+                  children: _aboutHelp(context, s),
                 ),
               ],
             ),
@@ -204,85 +159,97 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // ===================== المظهر =====================
+  // ===================== المظهر واللغة =====================
 
-  List<Widget> _appearance(BuildContext context, S s, SettingsProvider st) => [
-        // اللغة — في الأعلى لسهولة الوصول، ببطاقة بارزة.
-        Container(
-          margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.55),
-                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.20),
-              ],
-            ),
-            border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.25)),
+  List<Widget> _appearance(BuildContext context, S s, SettingsProvider st) {
+    final scheme = Theme.of(context).colorScheme;
+    return [
+      // اللغة — في الأعلى لسهولة الوصول، ببطاقة بارزة.
+      Container(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              scheme.primaryContainer.withOpacity(0.55),
+              scheme.primaryContainer.withOpacity(0.20),
+            ],
           ),
-          child: ListTile(
-            leading: Icon(Icons.language,
-                color: Theme.of(context).colorScheme.primary),
-            title: Text(s.t('language'),
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            trailing: DropdownButton<String>(
-              value: st.locale.languageCode,
-              underline: const SizedBox.shrink(),
-              items: [
-                for (final e in S.languages.entries)
-                  DropdownMenuItem(value: e.key, child: Text(e.value)),
-              ],
-              onChanged: (v) => st.setLocale(Locale(v ?? 'en')),
-            ),
-          ),
+          border: Border.all(color: scheme.primary.withOpacity(0.25)),
         ),
-
-        // الوضع (نهاري/ليلي/النظام)
-        ListTile(
-          leading: const Icon(Icons.brightness_6_outlined),
-          title: Text(s.t('theme_mode')),
-          trailing: DropdownButton<ThemeMode>(
-            value: st.themeMode,
+        child: ListTile(
+          leading: Icon(Icons.language, color: scheme.primary),
+          title: Text(s.t('language'),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          trailing: DropdownButton<String>(
+            value: st.locale.languageCode,
             underline: const SizedBox.shrink(),
             items: [
-              DropdownMenuItem(
-                  value: ThemeMode.system, child: Text(s.t('mode_system'))),
-              DropdownMenuItem(
-                  value: ThemeMode.light, child: Text(s.t('mode_light'))),
-              DropdownMenuItem(
-                  value: ThemeMode.dark, child: Text(s.t('mode_dark'))),
+              for (final e in S.languages.entries)
+                DropdownMenuItem(value: e.key, child: Text(e.value)),
             ],
-            onChanged: (v) => st.setThemeMode(v ?? ThemeMode.system),
+            onChanged: (v) => st.setLocale(Locale(v ?? 'en')),
           ),
         ),
+      ),
 
-        // لون السمة
-        ListTile(
-          leading: const Icon(Icons.color_lens_outlined),
-          title: Text(s.t('theme_color')),
-          subtitle: Wrap(
+      // الوضع (نهاري/ليلي/النظام)
+      ListTile(
+        leading: const Icon(Icons.brightness_6_outlined),
+        title: Text(s.t('theme_mode')),
+        trailing: DropdownButton<ThemeMode>(
+          value: st.themeMode,
+          underline: const SizedBox.shrink(),
+          items: [
+            DropdownMenuItem(
+                value: ThemeMode.system, child: Text(s.t('mode_system'))),
+            DropdownMenuItem(
+                value: ThemeMode.light, child: Text(s.t('mode_light'))),
+            DropdownMenuItem(
+                value: ThemeMode.dark, child: Text(s.t('mode_dark'))),
+          ],
+          onChanged: (v) => st.setThemeMode(v ?? ThemeMode.system),
+        ),
+      ),
+
+      // لون السمة
+      ListTile(
+        leading: const Icon(Icons.color_lens_outlined),
+        title: Text(s.t('theme_color')),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Wrap(
             spacing: 10,
+            runSpacing: 10,
             children: AppColors.themeSeeds.values.map((c) {
               final selected = c.value == st.seedColor.value;
               return GestureDetector(
                 onTap: () => st.setSeedColor(c),
                 child: Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  width: 30,
-                  height: 30,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: c,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color.alphaBlend(Colors.white.withOpacity(0.30), c),
+                        c,
+                      ],
+                    ),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: selected ? Colors.white : Colors.transparent,
-                      width: 2,
+                      width: 2.5,
                     ),
-                    boxShadow: selected
-                        ? [BoxShadow(color: c.withOpacity(0.6), blurRadius: 6)]
-                        : null,
+                    boxShadow: [
+                      BoxShadow(
+                          color: c.withOpacity(selected ? 0.7 : 0.35),
+                          blurRadius: selected ? 8 : 4,
+                          offset: const Offset(0, 2)),
+                    ],
                   ),
                   child: selected
                       ? const Icon(Icons.check, color: Colors.white, size: 18)
@@ -292,389 +259,52 @@ class SettingsScreen extends StatelessWidget {
             }).toList(),
           ),
         ),
-
-        // ألوان النظام (Dynamic Color) — أندرويد 12+
-        SwitchListTile(
-          secondary: const Icon(Icons.palette_outlined),
-          title: Text(s.t('dynamic_color')),
-          subtitle: Text(s.t('dynamic_color_desc')),
-          value: st.dynamicColor,
-          onChanged: st.setDynamicColor,
-        ),
-
-        // عرض مدمج لبطاقات الملاحظات
-        SwitchListTile(
-          secondary: const Icon(Icons.density_small),
-          title: Text(s.t('compact_view')),
-          subtitle: Text(s.t('compact_view_desc')),
-          value: st.compactCards,
-          onChanged: st.setCompactCards,
-        ),
-
-        // حجم الخط (واجهة التطبيق)
-        ListTile(
-          leading: const Icon(Icons.format_size),
-          title: Text(s.t('font_size')),
-          subtitle: Slider(
-            min: 0.85,
-            max: 1.4,
-            divisions: 11,
-            label: '${(st.fontScale * 100).round()}%',
-            value: st.fontScale,
-            onChanged: st.setFontScale,
-          ),
-        ),
-
-        // نوع الخط
-        ListTile(
-          leading: const Icon(Icons.font_download_outlined),
-          title: const Text('نوع الخط'),
-          trailing: DropdownButton<String>(
-            value: st.fontFamily,
-            underline: const SizedBox.shrink(),
-            onChanged: (v) {
-              if (v != null) st.setFontFamily(v);
-            },
-            items: _fontDropdownItems(context),
-          ),
-        ),
-      ];
-
-  // ===================== الملاحظة الافتراضية (المظهر) =====================
-
-  static const _styleNames = [
-    'سادة', 'مسطّر', 'شبكي', 'نقاط',
-    'شبكة دقيقة', 'نقاط كبيرة', 'أسطر', 'مربعات',
-  ];
-
-  List<Widget> _noteDefaults(BuildContext context, S s, SettingsProvider st) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final styleName = _styleNames[st.defaultBgStyle.clamp(0, 7)];
-    final defGrad = NoteGradient.parse(st.defaultGradient);
-
-    return [
-      // معاينة حيّة
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        child: _NotePreview(settings: st),
       ),
 
-      // لون الخلفية ونمط الصفحة
+      // ألوان النظام (Dynamic Color) — أندرويد 12+
+      SwitchListTile(
+        secondary: const Icon(Icons.auto_awesome_outlined),
+        title: Text(s.t('dynamic_color')),
+        subtitle: Text(s.t('dynamic_color_desc')),
+        value: st.dynamicColor,
+        onChanged: st.setDynamicColor,
+      ),
+
+      // حجم خطّ الواجهة
       ListTile(
-        leading: const Icon(Icons.palette_outlined),
-        title: const Text('لون/تدرّج الخلفية ونمط الصفحة'),
-        subtitle: Text(defGrad != null
-            ? 'تدرّج لوني • النمط: $styleName'
-            : 'النمط الحالي: $styleName'),
-        trailing: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: defGrad == null
-                ? AppColors.resolveNoteColor(st.defaultNoteColor, isDark)
-                : null,
-            gradient: defGrad?.toGradient(),
-            shape: BoxShape.circle,
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
+        leading: const Icon(Icons.format_size),
+        title: Text(s.t('font_size')),
+        subtitle: Slider(
+          min: 0.85,
+          max: 1.4,
+          divisions: 11,
+          label: '${(st.fontScale * 100).round()}%',
+          value: st.fontScale,
+          onChanged: st.setFontScale,
         ),
-        onTap: () async {
-          final res = await showColorPicker(context, st.defaultNoteColor,
-              currentStyle: st.defaultBgStyle,
-              currentGradient: st.defaultGradient,
-              currentOnLine: st.ruleOnLine,
-              currentThickness: st.ruleThickness,
-              currentOpacity: st.ruleOpacity,
-              currentLineHeight: st.noteLineHeight);
-          if (res != null) {
-            await st.setDefaultNoteColor(res.value);
-            if (res.bgStyle != null) await st.setDefaultBgStyle(res.bgStyle!);
-            await st.setDefaultGradient(res.gradient);
-            if (res.ruleOnLine != null) await st.setRuleOnLine(res.ruleOnLine!);
-            if (res.ruleThickness != null) {
-              await st.setRuleThickness(res.ruleThickness!);
-            }
-            if (res.ruleOpacity != null) {
-              await st.setRuleOpacity(res.ruleOpacity!);
-            }
-            if (res.ruleLineHeight != null) {
-              await st.setNoteLineHeight(res.ruleLineHeight!);
-            }
-          }
-        },
       ),
 
-      // تعميم نمط الصفحة (خلفية + تباعد أسطر + تسطير) على كل الملاحظات الحالية
+      // نوع خطّ الواجهة
       ListTile(
-        leading: const Icon(Icons.format_paint_outlined),
-        title: const Text('تطبيق نمط الصفحة على كل الملاحظات'),
-        subtitle: const Text(
-            'الخلفية وتباعد الأسطر والتسطير على كل ملاحظاتك دفعةً واحدة'),
-        onTap: () async {
-          final res = await showColorPicker(context, st.defaultNoteColor,
-              currentStyle: st.defaultBgStyle,
-              currentGradient: st.defaultGradient,
-              currentOnLine: st.ruleOnLine,
-              currentThickness: st.ruleThickness,
-              currentOpacity: st.ruleOpacity,
-              currentLineHeight: st.noteLineHeight);
-          if (res == null || !context.mounted) return;
-          if (!await confirmAction(context,
-              title: 'تطبيق على كل الملاحظات؟',
-              message:
-                  'ستأخذ كل ملاحظاتك الحالية هذه الخلفية وتباعد الأسطر والتسطير. '
-                  'خط المتن وحجمه عامّان (يطبَّقان على الكل تلقائيًّا)، والاتجاه يضبط نفسه لكل سطر. '
-                  'يمكنك تغيير أي ملاحظة لاحقًا.',
-              confirmLabel: 'تطبيق',
-              icon: Icons.format_paint_outlined,
-              destructive: false)) {
-            return;
-          }
-          final notesProvider = context.read<NotesProvider>();
-          // تباعد الأسطر يُحفظ أيضًا كافتراضي عامّ (للملاحظات الجديدة).
-          if (res.ruleLineHeight != null) {
-            await st.setNoteLineHeight(res.ruleLineHeight!);
-          }
-          final n = await notesProvider.notes.applyBackgroundToAll(
-            color: res.value,
-            bgStyle: res.bgStyle ?? st.defaultBgStyle,
-            gradient: res.gradient,
-            ruleOnLine: res.ruleOnLine,
-            ruleThickness: res.ruleThickness,
-            ruleOpacity: res.ruleOpacity,
-            ruleLineHeight: res.ruleLineHeight,
-          );
-          await notesProvider.refresh();
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('طُبّق نمط الصفحة على $n ملاحظة')),
-            );
-          }
-        },
-      ),
-
-      // خط المتن
-      ListTile(
-        leading: const Icon(Icons.text_fields),
-        title: const Text('خط المتن'),
+        leading: const Icon(Icons.font_download_outlined),
+        title: const Text('نوع الخط'),
         trailing: DropdownButton<String>(
-          value: st.noteFontFamily,
+          value: st.fontFamily,
           underline: const SizedBox.shrink(),
           onChanged: (v) {
-            if (v != null) st.setNoteFontFamily(v);
+            if (v != null) st.setFontFamily(v);
           },
           items: _fontDropdownItems(context),
         ),
       ),
-
-      // حجم خط المتن
-      ListTile(
-        leading: const Icon(Icons.format_size),
-        title: const Text('حجم خط المتن'),
-        subtitle: Slider(
-          min: 12,
-          max: 30,
-          divisions: 18,
-          label: st.noteFontSize.round().toString(),
-          value: st.noteFontSize.clamp(12, 30),
-          onChanged: st.setNoteFontSize,
-        ),
-      ),
-
-      // تباعد الأسطر
-      ListTile(
-        leading: const Icon(Icons.format_line_spacing),
-        title: const Text('تباعد الأسطر'),
-        subtitle: Slider(
-          min: 0.8,
-          max: 3.0,
-          divisions: 22,
-          label: st.noteLineHeight.toStringAsFixed(2),
-          value: st.noteLineHeight.clamp(0.8, 3.0),
-          onChanged: st.setNoteLineHeight,
-        ),
-      ),
-
     ];
   }
 
-  // ===================== أزرار شريط التنسيق =====================
-
-  /// إظهار/إخفاء وترتيب كل زرّ في شريط تنسيق المحرّر.
-  /// الترتيب بأسهم لأعلى/لأسفل، والإظهار بمفتاح — ويُطبَّق فورًا على المحرّر.
-  List<Widget> _toolbarButtons(BuildContext context, S s, SettingsProvider st) {
-    final order = st.toolOrder;
-    final scheme = Theme.of(context).colorScheme;
-    return [
-      const Padding(
-        padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
-        child: Text(
-          'رتّب الأزرار بالأسهم ↑ ↓، وأظهِر/أخفِ كلًّا منها بالمفتاح. '
-          'المخفيّة لا تُحذف وظيفتها — يمكنك إعادتها في أيّ وقت.',
-          style: TextStyle(fontSize: 12.5, height: 1.4),
-        ),
-      ),
-      for (var i = 0; i < order.length; i++)
-        ListTile(
-          dense: true,
-          key: ValueKey(order[i]),
-          title: Text(SettingsProvider.toolbarTools[order[i]] ?? order[i]),
-          // أسهم الترتيب + مفتاح الإظهار.
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.keyboard_arrow_up),
-                tooltip: 'تحريك لأعلى',
-                visualDensity: VisualDensity.compact,
-                onPressed:
-                    i == 0 ? null : () => st.moveTool(order[i], up: true),
-              ),
-              IconButton(
-                icon: const Icon(Icons.keyboard_arrow_down),
-                tooltip: 'تحريك لأسفل',
-                visualDensity: VisualDensity.compact,
-                onPressed: i == order.length - 1
-                    ? null
-                    : () => st.moveTool(order[i], up: false),
-              ),
-              Switch(
-                value: st.isToolVisible(order[i]),
-                activeColor: scheme.primary,
-                onChanged: (v) => st.setToolVisible(order[i], v),
-              ),
-            ],
-          ),
-        ),
-    ];
-  }
-
-  // ===================== تسطير الصفحة =====================
-
-  List<Widget> _noteRuling(BuildContext context, S s, SettingsProvider st) => [
-        // تفعيل/إلغاء التسطير افتراضيًّا (إلغاء ⇒ خلفية سادة بلا خطوط).
-        SwitchListTile(
-          secondary: const Icon(Icons.format_align_justify),
-          title: const Text('إظهار التسطير'),
-          subtitle: const Text('عند الإيقاف تكون الخلفية سادة بلا خطوط'),
-          value: st.defaultBgStyle != 0,
-          onChanged: (on) => st.setDefaultBgStyle(on ? 1 : 0),
-        ),
-
-        // محاذاة الكتابة: على السطر / بين السطرين
-        // نضع الأزرار في سطر مستقلّ تحت العنوان (subtitle) لا في trailing، وإلا
-        // انضغط العنوان في عمود ضيّق فظهر حرفًا تحت حرف.
-        ListTile(
-          leading: const Icon(Icons.vertical_align_center),
-          title: const Text('محاذاة الكتابة'),
-          subtitle: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: SegmentedButton<bool>(
-                showSelectedIcon: false,
-                style: SegmentedButton.styleFrom(
-                  textStyle: const TextStyle(fontSize: 12),
-                  visualDensity: VisualDensity.compact,
-                ),
-                segments: const [
-                  ButtonSegment(value: true, label: Text('على السطر')),
-                  ButtonSegment(value: false, label: Text('بين السطرين')),
-                ],
-                selected: {st.ruleOnLine},
-                onSelectionChanged: (v) => st.setRuleOnLine(v.first),
-              ),
-            ),
-          ),
-        ),
-
-        // سماكة الأسطر
-        ListTile(
-          leading: const Icon(Icons.line_weight),
-          title: const Text('سماكة الأسطر'),
-          subtitle: Slider(
-            min: 0.5,
-            max: 3.0,
-            divisions: 10,
-            label: st.ruleThickness.toStringAsFixed(1),
-            value: st.ruleThickness.clamp(0.5, 3.0),
-            onChanged: st.setRuleThickness,
-          ),
-        ),
-
-        // شفافية الأسطر
-        ListTile(
-          leading: const Icon(Icons.opacity),
-          title: const Text('شفافية الأسطر'),
-          subtitle: Slider(
-            min: 0.03,
-            max: 0.6,
-            divisions: 19,
-            label: '${(st.ruleOpacity * 100).round()}%',
-            value: st.ruleOpacity.clamp(0.03, 0.6),
-            onChanged: st.setRuleOpacity,
-          ),
-        ),
-      ];
-
-  // ===================== التحرير والعرض =====================
-
-  List<Widget> _editingDisplay(
-          BuildContext context, S s, SettingsProvider st) =>
-      [
-        // إخفاء قائمة (نسخ/لصق/تحديد الكل) أثناء الكتابة
-        SwitchListTile(
-          secondary: const Icon(Icons.content_paste_off_outlined),
-          title: const Text('إخفاء قائمة النسخ/اللصق'),
-          subtitle: const Text(
-              'تمنع ظهور شريط (نسخ/لصق/تحديد الكل) الذي قد يغطّي اختيار الخط والحجم أثناء التحرير.'),
-          value: st.hideSelectionMenu,
-          onChanged: st.setHideSelectionMenu,
-        ),
-
-        // مكان صفحة «معلومات عامة»
-        ListTile(
-          leading: const Icon(Icons.menu_book_outlined),
-          title: const Text('مكان صفحة «معلومات»'),
-          trailing: DropdownButton<InfoPlacement>(
-            value: st.infoPlacement,
-            underline: const SizedBox.shrink(),
-            onChanged: (v) {
-              if (v != null) st.setInfoPlacement(v);
-            },
-            items: const [
-              DropdownMenuItem(
-                  value: InfoPlacement.tab, child: Text('تبويب علوي')),
-              DropdownMenuItem(
-                  value: InfoPlacement.menu, child: Text('قائمة النقاط')),
-              DropdownMenuItem(
-                  value: InfoPlacement.drawer, child: Text('القائمة الجانبية')),
-            ],
-          ),
-        ),
-
-        // طريقة العرض
-        ListTile(
-          leading: const Icon(Icons.dashboard_outlined),
-          title: Text(s.t('layout')),
-          trailing: SegmentedButton<NoteLayout>(
-            segments: [
-              ButtonSegment(
-                  value: NoteLayout.grid, label: Text(s.t('layout_grid'))),
-              ButtonSegment(
-                  value: NoteLayout.list, label: Text(s.t('layout_list'))),
-            ],
-            selected: {st.layout},
-            onSelectionChanged: (v) => st.setLayout(v.first),
-          ),
-        ),
-      ];
-
-  // ===================== التنبيهات =====================
+  // ===================== التنبيهات والصوت =====================
 
   /// شارة عنوان مجموعة صغيرة داخل البطاقة.
   Widget _miniHeader(BuildContext context, String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
         child: Text(text,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
@@ -709,7 +339,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _notifications(BuildContext context, S s, SettingsProvider st) {
+  List<Widget> _remindersSound(BuildContext context, S s, SettingsProvider st) {
     Future<void> pickDevice() async {
       final uri = await RingtonePicker.pick(current: st.customToneUri);
       if (uri != null) {
@@ -720,14 +350,16 @@ class SettingsScreen extends StatelessWidget {
 
     final scheme = Theme.of(context).colorScheme;
     return [
-      // قائمة كل التذكيرات.
-      ListTile(
-        leading: const Icon(Icons.list_alt_outlined),
-        title: const Text('كل التذكيرات'),
-        subtitle: const Text('عرض وإدارة كل تنبيهاتك'),
-        trailing: const Icon(Icons.chevron_left),
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const RemindersScreen())),
+      // إعدادات افتراضية للتنبيه (نغمة/غفوة/قبل الوقت…).
+      _nav(context, Icons.tune, s.t('reminder_defaults'),
+          const ReminderDefaultsScreen()),
+      // وضع «لا يُفوَّت»: حلّ مسألة بسيطة قبل إيقاف المنبّه.
+      SwitchListTile(
+        secondary: const Icon(Icons.calculate_outlined),
+        title: const Text('وضع لا يُفوَّت'),
+        subtitle: const Text('احسب مسألة بسيطة قبل إيقاف المنبّه'),
+        value: st.mathToDismiss,
+        onChanged: st.setMathToDismiss,
       ),
       const Divider(height: 1),
       _miniHeader(context, 'نغمات كلاسيكية'),
@@ -767,29 +399,30 @@ class SettingsScreen extends StatelessWidget {
             : const Icon(Icons.chevron_left),
         onTap: pickDevice,
       ),
+      _nav(context, Icons.library_music_outlined, s.t('sound_library'),
+          const SoundLibraryScreen()),
       const Divider(height: 1),
-      _miniHeader(context, S.of(context).t('sound_options')),
+      _miniHeader(context, s.t('sound_options')),
       SwitchListTile(
         secondary: const Icon(Icons.volume_up_outlined),
-        title: Text(S.of(context).t('auto_raise_volume')),
-        subtitle: Text(S.of(context).t('auto_raise_volume_desc')),
+        title: Text(s.t('auto_raise_volume')),
+        subtitle: Text(s.t('auto_raise_volume_desc')),
         value: st.autoRaiseVolume,
         onChanged: (v) => st.setAutoRaiseVolume(v),
       ),
       SwitchListTile(
         secondary: const Icon(Icons.trending_up),
-        title: Text(S.of(context).t('gradual_volume')),
-        subtitle: Text(S.of(context).t('gradual_volume_desc')),
+        title: Text(s.t('gradual_volume')),
+        subtitle: Text(s.t('gradual_volume_desc')),
         value: st.gradualVolume,
-        onChanged:
-            st.autoRaiseVolume ? (v) => st.setGradualVolume(v) : null,
+        onChanged: st.autoRaiseVolume ? (v) => st.setGradualVolume(v) : null,
       ),
     ];
   }
 
-  // ===================== حول التطبيق =====================
+  // ===================== حول ومساعدة =====================
 
-  List<Widget> _about(BuildContext context, S s) => [
+  List<Widget> _aboutHelp(BuildContext context, S s) => [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(s.t('about_desc'),
@@ -810,6 +443,11 @@ class SettingsScreen extends StatelessWidget {
           },
         ),
         const _UpdateTile(),
+        const Divider(height: 1),
+        _nav(context, Icons.menu_book_outlined, s.t('user_guide'),
+            const HelpGuideScreen()),
+        _nav(context, Icons.health_and_safety_outlined,
+            s.t('reliability_test'), const ReliabilityTestScreen()),
       ];
 
   /// عناصر قائمة اختيار الخط: مجمّعة حسب العائلة (نسخ/كوفي/…) برؤوس غير قابلة
@@ -841,76 +479,8 @@ class SettingsScreen extends StatelessWidget {
       leading: Icon(icon),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       trailing: const Icon(Icons.chevron_left),
-      onTap: () => Navigator.push(
-          context, MaterialPageRoute(builder: (_) => page)),
-    );
-  }
-}
-
-/// معاينة حيّة لشكل الملاحظة الافتراضية (لون + تسطير + خط المتن).
-class _NotePreview extends StatelessWidget {
-  final SettingsProvider settings;
-  const _NotePreview({required this.settings});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = AppColors.resolveNoteColor(settings.defaultNoteColor, isDark);
-    final grad = NoteGradient.parse(settings.defaultGradient);
-    final onBg = grad != null
-        ? grad.onColor
-        : (ThemeData.estimateBrightnessForColor(bg) == Brightness.dark
-            ? Colors.white
-            : Colors.black87);
-    final gap = settings.noteFontSize * settings.noteLineHeight;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: grad == null ? bg : null,
-        gradient: grad?.toGradient(),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: PaperBackground(
-        style: settings.defaultBgStyle,
-        lineColor: onBg,
-        gap: gap,
-        thickness: settings.ruleThickness,
-        opacity: settings.ruleOpacity,
-        onLine: settings.ruleOnLine,
-        fontSize: settings.noteFontSize,
-        topPadding: 12,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final line in const [
-                'مثال على نص الملاحظة',
-                'تنتظم الكتابة مع التسطير',
-                'حسب الإعدادات المختارة',
-              ])
-                Text(
-                  line,
-                  style: TextStyle(
-                    color: onBg,
-                    fontFamily: settings.noteFontFamily,
-                    fontSize: settings.noteFontSize,
-                    height: settings.noteLineHeight,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+      onTap: () =>
+          Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
     );
   }
 }
