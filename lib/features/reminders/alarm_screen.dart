@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_strings.dart';
@@ -23,6 +25,8 @@ class AlarmScreen extends StatefulWidget {
 
 class _AlarmScreenState extends State<AlarmScreen> {
   bool _raised = false;
+  Timer? _escalateTimer; // تصعيد متعدّد المراحل إن لم يتفاعل المستخدم.
+  int _stage = 0;
 
   int get _base => int.tryParse(widget.info['base'] ?? '') ?? 0;
   int? get _noteId {
@@ -42,10 +46,23 @@ class _AlarmScreenState extends State<AlarmScreen> {
         rampSeconds: settings.gradualVolume ? 15 : 0,
       );
     }
+    // تصعيد متعدّد المراحل: كل 12 ثانية بلا تفاعل يزيد الإلحاح (صوت أقصى +
+    // اهتزاز متصاعد) — للمنبّهات الحرجة التي يجب ألّا تُفوَّت.
+    _escalateTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (!mounted) return;
+      setState(() => _stage++);
+      if (_raised) AlarmVolume.raise(targetPercent: 100);
+      final pulses = _stage.clamp(1, 4);
+      for (var i = 0; i < pulses; i++) {
+        Future.delayed(Duration(milliseconds: i * 200),
+            () => HapticFeedback.heavyImpact());
+      }
+    });
   }
 
   @override
   void dispose() {
+    _escalateTimer?.cancel();
     // نستعيد مستوى الصوت الأصليّ مهما كانت طريقة الإغلاق (إنجاز/تأجيل/رجوع).
     if (_raised) AlarmVolume.restore();
     super.dispose();
@@ -81,7 +98,16 @@ class _AlarmScreenState extends State<AlarmScreen> {
                     onPressed: () => Navigator.maybePop(context),
                   ),
                 ),
-                const Icon(Icons.crisis_alert, color: Colors.white, size: 56),
+                Icon(Icons.crisis_alert,
+                    color: Colors.white, size: 56.0 + _stage * 4),
+                if (_stage > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text('🔴 التنبيه يتصاعد',
+                        style: TextStyle(
+                            color: Colors.amberAccent.shade100,
+                            fontWeight: FontWeight.bold)),
+                  ),
                 const Spacer(),
                 // الوقت الكبير.
                 Text('${two(now.hour)}:${two(now.minute)}',
