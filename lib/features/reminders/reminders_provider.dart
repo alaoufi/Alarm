@@ -236,6 +236,48 @@ class RemindersProvider extends ChangeNotifier {
     await refresh();
   }
 
+  String _titleFor(ReminderView v) => v.reminder.isStandalone
+      ? (v.reminder.title?.isNotEmpty == true ? v.reminder.title! : 'تنبيه')
+      : (v.note?.title.isNotEmpty == true ? v.note!.title : 'تذكير');
+
+  String _bodyFor(ReminderView v) =>
+      v.reminder.isStandalone ? '' : (v.note?.content ?? '');
+
+  /// تأجيل تنبيه إلى وقت جديد (يعيد جدولته بنفس المعرّف ويُعيد تفعيله).
+  Future<void> postpone(ReminderView v, DateTime newTime) async {
+    final r = v.reminder;
+    await NotificationService.instance.cancel(r.notificationId);
+    final updated = r.copyWith(time: newTime, isActive: true);
+    await _repo.update(updated);
+    await NotificationService.instance
+        .schedule(updated, _titleFor(v), _bodyFor(v));
+    await refresh();
+  }
+
+  /// نسخ تنبيه (إنشاء نسخة مطابقة بمعرّف إشعار جديد). لا تُنسخ المرفقات لتفادي
+  /// مشاركة ملفّ واحد بين تنبيهين (حذف أحدهما قد يحذف ملفّ الآخر).
+  Future<void> duplicate(ReminderView v) async {
+    final r = v.reminder;
+    final notifId = _uniqueId(await _existingIds());
+    final copy = Reminder(
+      noteId: r.noteId,
+      title: r.title,
+      time: r.time,
+      repeat: r.repeat,
+      importance: r.importance,
+      preAlerts: r.preAlerts,
+      location: r.location,
+      attachmentPath: '',
+      notificationId: notifId,
+      intervalDays: r.intervalDays,
+      doseCount: r.doseCount,
+    );
+    final id = await _repo.insert(copy);
+    await NotificationService.instance
+        .schedule(copy.copyWith(id: id), _titleFor(v), _bodyFor(v));
+    await refresh();
+  }
+
   Future<void> removeReminder(Reminder reminder) async {
     await NotificationService.instance.cancel(reminder.notificationId);
     // احذف مرفق الدعوة المرتبط (إن وُجد) من القرص.

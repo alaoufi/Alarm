@@ -21,8 +21,16 @@ import 'reminder_defaults_screen.dart';
 import 'reminders_provider.dart';
 import 'standalone_reminder_dialog.dart';
 
-class RemindersScreen extends StatelessWidget {
+class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
+
+  @override
+  State<RemindersScreen> createState() => _RemindersScreenState();
+}
+
+class _RemindersScreenState extends State<RemindersScreen> {
+  String _query = '';
+  bool _searching = false;
 
   static const _weekdayAr = {
     1: 'الإثنين',
@@ -38,55 +46,90 @@ class RemindersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final provider = context.watch<RemindersProvider>();
+    final q = _query.trim().toLowerCase();
     // ترتيب التنبيهات: المُفعَّلة أولًا، ثم الأقرب موعدًا.
     final items = [...provider.items]..sort((a, b) {
         final aOn = a.reminder.isActive, bOn = b.reminder.isActive;
         if (aOn != bOn) return aOn ? -1 : 1;
         return _nextFire(a.reminder).compareTo(_nextFire(b.reminder));
       });
+    final filtered = q.isEmpty
+        ? items
+        : items.where((v) => _labelOf(v).toLowerCase().contains(q)).toList();
 
     return Scaffold(
-      appBar: gradientAppBar(context, s.t('reminders'), actions: [
-        IconButton(
-          icon: const Icon(Icons.settings_outlined),
-          tooltip: s.t('settings'),
-          onPressed: () => _open(context, const SettingsScreen()),
-        ),
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.settings),
-          tooltip: s.t('reminder_tools'),
-          onSelected: (v) {
-            switch (v) {
-              case 'med_mode':
-                _open(context, const MedicationScreen());
-                break;
-              case 'reminder_defaults':
-                _open(context, const ReminderDefaultsScreen());
-                break;
-              case 'notif_center':
-                _open(context, const NotificationCenterScreen());
-                break;
-              case 'sound_library':
-                _open(context, const SoundLibraryScreen());
-                break;
-              case 'reliability_test':
-                _open(context, const ReliabilityTestScreen());
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            _menuItem('med_mode', Icons.medication_outlined, s.t('med_mode')),
-            _menuItem('reminder_defaults', Icons.tune,
-                s.t('reminder_defaults')),
-            _menuItem('notif_center', Icons.notifications_active_outlined,
-                s.t('notif_center')),
-            _menuItem('sound_library', Icons.library_music_outlined,
-                s.t('sound_library')),
-            _menuItem('reliability_test', Icons.health_and_safety_outlined,
-                s.t('reliability_test')),
-          ],
-        ),
-      ]),
+      appBar: _searching
+          ? AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => setState(() {
+                  _searching = false;
+                  _query = '';
+                }),
+              ),
+              title: TextField(
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'ابحث في التنبيهات…',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              ),
+              actions: [
+                if (_query.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () => setState(() => _query = ''),
+                  ),
+              ],
+            )
+          : gradientAppBar(context, s.t('reminders'), actions: [
+              IconButton(
+                icon: const Icon(Icons.search),
+                tooltip: 'بحث',
+                onPressed: () => setState(() => _searching = true),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                tooltip: s.t('settings'),
+                onPressed: () => _open(context, const SettingsScreen()),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                tooltip: s.t('reminder_tools'),
+                onSelected: (v) {
+                  switch (v) {
+                    case 'med_mode':
+                      _open(context, const MedicationScreen());
+                      break;
+                    case 'reminder_defaults':
+                      _open(context, const ReminderDefaultsScreen());
+                      break;
+                    case 'notif_center':
+                      _open(context, const NotificationCenterScreen());
+                      break;
+                    case 'sound_library':
+                      _open(context, const SoundLibraryScreen());
+                      break;
+                    case 'reliability_test':
+                      _open(context, const ReliabilityTestScreen());
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  _menuItem(
+                      'med_mode', Icons.medication_outlined, s.t('med_mode')),
+                  _menuItem('reminder_defaults', Icons.tune,
+                      s.t('reminder_defaults')),
+                  _menuItem('notif_center', Icons.notifications_active_outlined,
+                      s.t('notif_center')),
+                  _menuItem('sound_library', Icons.library_music_outlined,
+                      s.t('sound_library')),
+                  _menuItem('reliability_test',
+                      Icons.health_and_safety_outlined, s.t('reliability_test')),
+                ],
+              ),
+            ]),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showStandaloneReminderDialog(context),
         icon: const Icon(Icons.add_alarm),
@@ -95,17 +138,41 @@ class RemindersScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 96),
         children: [
-          _quickAddBar(context),
-          if (items.isEmpty)
-            _emptyInline(context, s)
+          if (!_searching) _quickAddBar(context),
+          if (filtered.isEmpty)
+            (q.isEmpty ? _emptyInline(context, s) : _noResults(context, q))
           else ...[
-            _nextBanner(context, items),
-            ..._groupedChildren(context, s, provider, items),
+            if (q.isEmpty) _nextBanner(context, filtered),
+            ..._groupedChildren(context, s, provider, filtered),
           ],
         ],
       ),
     );
   }
+
+  /// نصّ التنبيه المعروض (للعرض والبحث).
+  String _labelOf(ReminderView v) {
+    final r = v.reminder;
+    final note = v.note;
+    return r.isStandalone
+        ? (r.title?.isNotEmpty == true ? r.title! : 'تنبيه')
+        : (note?.title.isNotEmpty == true
+            ? note!.title
+            : (note?.content ?? 'ملاحظة'));
+  }
+
+  Widget _noResults(BuildContext context, String q) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+        child: Column(
+          children: [
+            Icon(Icons.search_off,
+                size: 56, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(height: 12),
+            Text('لا نتائج لـ «$q»',
+                style: Theme.of(context).textTheme.titleMedium),
+          ],
+        ),
+      );
 
   void _open(BuildContext context, Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
@@ -304,11 +371,7 @@ class RemindersScreen extends StatelessWidget {
     final scheme = theme.colorScheme;
     final dark = theme.brightness == Brightness.dark;
     final timeStr = DateFormat('h:mm a', 'ar').format(r.time);
-    final label = r.isStandalone
-        ? (r.title?.isNotEmpty == true ? r.title! : 'تنبيه')
-        : (note?.title.isNotEmpty == true
-            ? note!.title
-            : (note?.content ?? 'ملاحظة'));
+    final label = _labelOf(v);
     // وصف التكرار (مع اليوم عند الأسبوعي، وفاصل/مدّة الدواء إن وُجدت).
     String repeatInfo;
     if (r.intervalDays >= 2) {
@@ -382,6 +445,7 @@ class RemindersScreen extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(22),
             onTap: onTap,
+            onLongPress: () => _showActions(context, s, provider, v),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
               child: Column(
@@ -481,6 +545,103 @@ class RemindersScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// قائمة إجراءات سريعة عند الضغط المطوّل: تأجيل / نسخ / حذف.
+  Future<void> _showActions(BuildContext context, S s,
+      RemindersProvider provider, ReminderView v) async {
+    final scheme = Theme.of(context).colorScheme;
+    final r = v.reminder;
+    final t = r.time;
+    final now = DateTime.now();
+    final tomorrowSame =
+        DateTime(now.year, now.month, now.day + 1, t.hour, t.minute);
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+              child: Row(
+                children: [
+                  Icon(Icons.alarm, color: scheme.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(_labelOf(v),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.snooze),
+              title: const Text('تأجيل ١٠ دقائق'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _postpone(context, provider, v,
+                    DateTime.now().add(const Duration(minutes: 10)));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.update),
+              title: const Text('تأجيل ساعة'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _postpone(context, provider, v,
+                    DateTime.now().add(const Duration(hours: 1)));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.wb_twilight),
+              title: const Text('تأجيل إلى الغد (نفس الوقت)'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _postpone(context, provider, v, tomorrowSame);
+              },
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.copy_all_outlined),
+              title: const Text('نسخ التنبيه'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final messenger = ScaffoldMessenger.of(context);
+                await provider.duplicate(v);
+                messenger.showSnackBar(
+                    const SnackBar(content: Text('تم نسخ التنبيه')));
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: scheme.error),
+              title: Text('حذف', style: TextStyle(color: scheme.error)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                if (await confirmDelete(context,
+                    title: 'حذف التنبيه؟',
+                    message: 'سيُحذف هذا التنبيه ولن يُذكّرك بعد الآن.')) {
+                  await provider.removeReminder(r);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _postpone(BuildContext context, RemindersProvider provider,
+      ReminderView v, DateTime newTime) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await provider.postpone(v, newTime);
+    final at = DateFormat('h:mm a', 'ar').format(newTime);
+    messenger
+        .showSnackBar(SnackBar(content: Text('تم التأجيل إلى $at')));
   }
 
   /// شارة منبّه دائرية بارزة (ثلاثية الأبعاد) بتدرّج وظلّ ملوّن.
