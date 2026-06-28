@@ -160,7 +160,6 @@ class _RemindersScreenState extends State<RemindersScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 96),
         children: [
-          if (!_searching) _quickAddBar(context),
           if (filtered.isEmpty)
             (q.isEmpty ? _emptyInline(context, s) : _noResults(context, q))
           else ...[
@@ -244,56 +243,6 @@ class _RemindersScreenState extends State<RemindersScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  /// شريط الإضافة السريعة: أزرار تُنشئ تنبيهًا «مرّة واحدة» فورًا بنقرة.
-  Widget _quickAddBar(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    Widget chip(IconData icon, String label, DateTime Function() when) =>
-        Padding(
-          padding: const EdgeInsetsDirectional.only(end: 8),
-          child: ActionChip(
-            avatar: Icon(icon, size: 18, color: scheme.primary),
-            label: Text(label),
-            onPressed: () => _quickAdd(context, when(), label),
-          ),
-        );
-    final now0 = DateTime.now();
-    return SizedBox(
-      height: 46,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        children: [
-          chip(Icons.bolt, 'بعد ١٠ د',
-              () => DateTime.now().add(const Duration(minutes: 10))),
-          chip(Icons.timelapse, 'بعد ٣٠ د',
-              () => DateTime.now().add(const Duration(minutes: 30))),
-          chip(Icons.hourglass_bottom, 'بعد ساعة',
-              () => DateTime.now().add(const Duration(hours: 1))),
-          chip(Icons.wb_sunny_outlined, 'غدًا ٨ص', () {
-            final t = now0.add(const Duration(days: 1));
-            return DateTime(t.year, t.month, t.day, 8);
-          }),
-          chip(Icons.nightlight_outlined, 'الليلة ٩م',
-              () => DateTime(now0.year, now0.month, now0.day, 21)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _quickAdd(
-      BuildContext context, DateTime time, String label) async {
-    // لو كان الوقت المحسوب قد فات (مثل «الليلة ٩م» بعد التاسعة) ⇒ انقله للغد.
-    var t = time;
-    if (!t.isAfter(DateTime.now())) t = t.add(const Duration(days: 1));
-    final provider = context.read<RemindersProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-    await provider.setStandalone(t, ReminderRepeat.once, 'تنبيه سريع');
-    final at = DateFormat('h:mm a', 'ar').format(t);
-    messenger.showSnackBar(
-      SnackBar(content: Text('تم ضبط تنبيه ($label) عند $at')),
     );
   }
 
