@@ -16,6 +16,7 @@ import '../../widgets/ui_kit.dart';
 import '../editor/editor_attachments.dart';
 import '../editor/note_editor_screen.dart';
 import '../help/help_guide_screen.dart';
+import '../legal/privacy_screen.dart';
 import '../meds/medication_screen.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_screen.dart';
@@ -354,6 +355,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 }),
                 _drawerTile(context, Icons.settings_outlined, s.t('settings'),
                     () => go(const SettingsScreen())),
+                _drawerTile(context, Icons.privacy_tip_outlined,
+                    s.t('privacy_disclaimer'), () => go(const PrivacyScreen())),
               ],
             ),
           ),

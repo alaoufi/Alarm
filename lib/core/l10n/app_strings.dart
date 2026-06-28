@@ -519,6 +519,7 @@ class S {
     'med_missed': 'فاتت',
     'adherence': 'الالتزام',
     'no_med_log': 'لا سجلّ جرعات بعد',
+    'privacy_disclaimer': 'الخصوصية وإخلاء المسؤولية',
   };
 
   static const Map<String, String> _en = {
@@ -980,6 +981,7 @@ class S {
     'med_missed': 'Missed',
     'adherence': 'Adherence',
     'no_med_log': 'No dose log yet',
+    'privacy_disclaimer': 'Privacy & Disclaimer',
   };
 
   static const Map<String, String> _tr = {
@@ -1441,6 +1443,7 @@ class S {
     'med_missed': 'Kaçırıldı',
     'adherence': 'Uyum',
     'no_med_log': 'Henüz doz kaydı yok',
+    'privacy_disclaimer': 'Gizlilik ve Sorumluluk Reddi',
   };
 
   static const Map<String, String> _es = {
@@ -1902,6 +1905,7 @@ class S {
     'reminder_defaults': 'Ajustes de recordatorio por defecto',
     'alarm_tone': 'Tono',
     'snooze': 'Posponer',
+    'privacy_disclaimer': 'Privacidad y aviso legal',
   };
 
   static const Map<String, String> _de = {
@@ -2343,6 +2347,7 @@ class S {
     'med_missed': 'Verpasst',
     'adherence': 'Therapietreue',
     'no_med_log': 'Noch kein Protokoll',
+    'privacy_disclaimer': 'Datenschutz & Haftungsausschluss',
   };
 
   static const Map<String, String> _fil = {
@@ -2784,6 +2789,7 @@ class S {
     'med_missed': 'Hindi nainom',
     'adherence': 'Pagsunod',
     'no_med_log': 'Wala pang record',
+    'privacy_disclaimer': 'Privacy at Disclaimer',
   };
 
   static const Map<String, String> _fr = {
@@ -3225,6 +3231,7 @@ class S {
     'med_missed': 'Manquée',
     'adherence': 'Observance',
     'no_med_log': 'Aucun journal',
+    'privacy_disclaimer': 'Confidentialité et avis',
   };
 
   static const Map<String, String> _id = {
@@ -3666,6 +3673,7 @@ class S {
     'med_missed': 'Terlewat',
     'adherence': 'Kepatuhan',
     'no_med_log': 'Belum ada catatan',
+    'privacy_disclaimer': 'Privasi & Penyangkalan',
   };
 
   static const Map<String, String> _it = {
@@ -4107,6 +4115,7 @@ class S {
     'med_missed': 'Saltata',
     'adherence': 'Aderenza',
     'no_med_log': 'Nessun registro',
+    'privacy_disclaimer': 'Privacy e avvertenze',
   };
 
   static const Map<String, String> _ms = {
@@ -4548,6 +4557,7 @@ class S {
     'med_missed': 'Terlepas',
     'adherence': 'Kepatuhan',
     'no_med_log': 'Tiada rekod lagi',
+    'privacy_disclaimer': 'Privasi & Penafian',
   };
 
   static const Map<String, String> _hi = {
@@ -4989,6 +4999,7 @@ class S {
     'med_missed': 'छूटी',
     'adherence': 'पालन',
     'no_med_log': 'अभी कोई रिकॉर्ड नहीं',
+    'privacy_disclaimer': 'गोपनीयता और अस्वीकरण',
   };
 
   static const Map<String, String> _bn = {
@@ -5430,6 +5441,7 @@ class S {
     'med_missed': 'মিস',
     'adherence': 'মেনে চলা',
     'no_med_log': 'এখনো কোনো রেকর্ড নেই',
+    'privacy_disclaimer': 'গোপনীয়তা ও দাবিত্যাগ',
   };
 
   static const Map<String, String> _fa = {
@@ -5871,6 +5883,7 @@ class S {
     'med_missed': 'فراموش شد',
     'adherence': 'پایبندی',
     'no_med_log': 'هنوز سابقه‌ای نیست',
+    'privacy_disclaimer': 'حریم خصوصی و سلب مسئولیت',
   };
 
   static const Map<String, String> _ru = {
@@ -6312,6 +6325,7 @@ class S {
     'med_missed': 'Пропущено',
     'adherence': 'Соблюдение',
     'no_med_log': 'Пока нет записей',
+    'privacy_disclaimer': 'Конфиденциальность и оговорка',
   };
 }
 

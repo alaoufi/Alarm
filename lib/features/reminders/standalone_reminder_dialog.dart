@@ -66,9 +66,6 @@ extension ReminderKindX on ReminderKind {
       };
 }
 
-/// وصف ودّي مختصر لفاصل الجرعات (جرعة ثمّ راحة).
-String _intervalHint(S s) => s.t('rd_interval_hint');
-
 /// لوحة ألوان التنبيه المتاحة (ARGB).
 const List<int> _reminderPalette = [
   0xFF00897B, 0xFF1E88E5, 0xFF8E24AA, 0xFFF57C00,
@@ -915,8 +912,9 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             ],
                           ),
                           const SizedBox(height: 14),
-                          // التكرار المخصّص «كل N يوم» يحجب خيارات التكرار العاديّة.
-                          if (intervalDays < 2) ...[
+                          // الدواء يستخدم «فاصل الجرعات» أدناه؛ بقيّة الأنواع
+                          // تستخدم التكرار العاديّ (مرّة/يوميّ/أسبوعيّ…).
+                          if (kind != ReminderKind.medication) ...[
                             label(s.t('rd_repeat')),
                             Wrap(
                               spacing: 8,
@@ -952,104 +950,63 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                               ),
                             ],
                           ],
-                          // تكرار مخصّص «كل N يوم» لكل الأنواع عدا الدواء (له قسمه
-                          // الخاصّ أدناه بفاصل الجرعات ومدّة العلاج).
-                          if (kind != ReminderKind.medication) ...[
-                            const SizedBox(height: 14),
-                            label(s.t('custom_repeat')),
-                            Wrap(spacing: 8, runSpacing: 6, children: [
-                              ChoiceChip(
-                                label: Text(s.t('repeat_off')),
-                                selected: intervalDays < 2,
-                                onSelected: (_) =>
-                                    setState(() => intervalDays = 0),
-                              ),
-                              ChoiceChip(
-                                label: Text(s.t('repeat_every_days')),
-                                selected: intervalDays >= 2,
-                                onSelected: (_) => setState(() => intervalDays =
-                                    intervalDays >= 2 ? intervalDays : 2),
-                              ),
-                            ]),
-                            if (intervalDays >= 2)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Row(children: [
-                                  Text(s.t('every')),
-                                  IconButton(
-                                    icon: const Icon(
-                                        Icons.remove_circle_outline),
-                                    onPressed: intervalDays > 2
-                                        ? () => setState(() => intervalDays--)
-                                        : null,
-                                  ),
-                                  Text('$intervalDays ${s.t('day_unit')}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15)),
-                                  IconButton(
-                                    icon: const Icon(Icons.add_circle_outline),
-                                    onPressed: intervalDays < 365
-                                        ? () => setState(() => intervalDays++)
-                                        : null,
-                                  ),
-                                ]),
-                              ),
-                          ],
-                          // خيارات خاصّة بالدواء: فاصل الجرعات + مدّة العلاج.
+                          // خيارات خاصّة بالدواء: فاصل الجرعات (أيام الراحة) + مدّة العلاج.
+                          // «كل عدد أيام» يظهر للدواء فقط؛ ويُحسب كأيام راحة:
+                          // 0 = يوميًّا · 1 = يوم بعد يوم · 2 = جرعة ثم يومان راحة …
                           if (kind == ReminderKind.medication) ...[
                             const SizedBox(height: 14),
-                            label(s.t('rd_dose_interval')),
-                            Wrap(spacing: 8, runSpacing: 6, children: [
-                              ChoiceChip(
-                                label: Text(s.t('rd_by_repeat')),
-                                selected: intervalDays < 2,
-                                onSelected: (_) =>
-                                    setState(() => intervalDays = 0),
-                              ),
-                              ChoiceChip(
-                                label: Text(s.t('repeat_every_days')),
-                                selected: intervalDays >= 2,
-                                onSelected: (_) => setState(() =>
-                                    intervalDays = intervalDays >= 2
-                                        ? intervalDays
-                                        : 2),
-                              ),
-                            ]),
-                            if (intervalDays >= 2)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Row(children: [
-                                  Text(s.t('every')),
-                                  IconButton(
-                                    icon: const Icon(
-                                        Icons.remove_circle_outline),
-                                    onPressed: intervalDays > 2
-                                        ? () =>
-                                            setState(() => intervalDays--)
-                                        : null,
-                                  ),
-                                  Text('$intervalDays ${s.t('day_unit')}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15)),
-                                  IconButton(
-                                    icon: const Icon(Icons.add_circle_outline),
-                                    onPressed: intervalDays < 30
-                                        ? () =>
-                                            setState(() => intervalDays++)
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text('(${_intervalHint(s)})',
+                            label('فاصل الجرعات (أيام الراحة)'),
+                            Builder(builder: (_) {
+                              final rest =
+                                  intervalDays >= 2 ? intervalDays - 1 : 0;
+                              final restText = rest == 0
+                                  ? 'يوميًّا — جرعة كلّ يوم'
+                                  : rest == 1
+                                      ? 'يوم بعد يوم (جرعة ثمّ يوم راحة)'
+                                      : 'جرعة ثمّ $rest أيام راحة';
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline),
+                                      onPressed: rest > 0
+                                          ? () => setState(() {
+                                                final nr = rest - 1;
+                                                intervalDays =
+                                                    nr == 0 ? 0 : nr + 1;
+                                              })
+                                          : null,
+                                    ),
+                                    Container(
+                                      constraints:
+                                          const BoxConstraints(minWidth: 40),
+                                      alignment: Alignment.center,
+                                      child: Text('$rest',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 22)),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle_outline),
+                                      onPressed: rest < 30
+                                          ? () => setState(
+                                              () => intervalDays = rest + 2)
+                                          : null,
+                                    ),
+                                  ]),
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 2),
+                                    child: Text(restText,
                                         style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 12.5,
                                             color: scheme.onSurface
-                                                .withOpacity(0.6))),
+                                                .withOpacity(0.65))),
                                   ),
-                                ]),
-                              ),
+                                ],
+                              );
+                            }),
                             const SizedBox(height: 14),
                             label(s.t('med_course_len')),
                             Wrap(spacing: 8, runSpacing: 6, children: [
@@ -1323,8 +1280,8 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             onPressed: () async {
                               final finalTitle = composeTitle();
                               final isMed = kind == ReminderKind.medication;
-                              // تكرار مخصّص «كل N يوم» متاح لكل الأنواع (لا الدواء
-                              // فقط)؛ يُجدوَل عبر آليّة المواعيد المتكرّرة نفسها.
+                              // «كل عدد أيام» (فاصل الجرعات بأيام الراحة) خاصّ
+                              // بالدواء؛ يُجدوَل عبر آليّة المواعيد المتكرّرة نفسها.
                               final hasInterval = intervalDays >= 2;
                               // كورس (فاصل مخصّص أو عدد جرعات) يمرّ دومًا عبر
                               // setStandalone لا التكرار الأسبوعيّ.
@@ -1342,7 +1299,7 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                 } else {
                                   await provider.setStandalone(
                                       combined(),
-                                      hasInterval
+                                      (hasInterval || isMed)
                                           ? ReminderRepeat.daily
                                           : repeat,
                                       finalTitle,
