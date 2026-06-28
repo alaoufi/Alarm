@@ -164,6 +164,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   }
                 },
                 itemBuilder: (context) => [
+                  _guideMenuItem(context, s.t('user_guide')),
+                  const PopupMenuDivider(),
                   _menuItem('dashboard', Icons.dashboard_outlined, 'لوحة اليوم'),
                   _menuItem('templates', Icons.dashboard_customize_outlined,
                       'قوالب جاهزة'),
@@ -178,8 +180,6 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       s.t('sound_library')),
                   _menuItem('reliability_test',
                       Icons.health_and_safety_outlined, s.t('reliability_test')),
-                  _menuItem('user_guide', Icons.menu_book_outlined,
-                      s.t('user_guide')),
                 ],
               ),
             ]),
@@ -302,6 +302,62 @@ class _RemindersScreenState extends State<RemindersScreen> {
           Text(label),
         ]),
       );
+
+  /// عنصر «دليل الاستخدام» بارز أعلى القائمة — بطاقة ملوّنة بأيقونة ثلاثية الأبعاد.
+  PopupMenuItem<String> _guideMenuItem(BuildContext context, String label) {
+    final scheme = Theme.of(context).colorScheme;
+    return PopupMenuItem<String>(
+      value: 'user_guide',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              scheme.primary.withOpacity(0.18),
+              scheme.primary.withOpacity(0.06),
+            ],
+          ),
+          border: Border.all(color: scheme.primary.withOpacity(0.35)),
+        ),
+        child: Row(children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  scheme.primary,
+                  Color.alphaBlend(Colors.black.withOpacity(0.2), scheme.primary),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                    color: scheme.primary.withOpacity(0.4),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2)),
+              ],
+            ),
+            child: const Icon(Icons.menu_book, color: Colors.white, size: 19),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: scheme.primary)),
+          ),
+          Icon(Icons.chevron_left, color: scheme.primary.withOpacity(0.7)),
+        ]),
+      ),
+    );
+  }
 
   /// لافتة «المنبّه التالي بعد…» لأقرب منبّه مُفعَّل.
   Widget _nextBanner(BuildContext context, List<ReminderView> items) {
