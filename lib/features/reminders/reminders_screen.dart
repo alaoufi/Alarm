@@ -17,6 +17,7 @@ import '../editor/editor_attachments.dart';
 import '../editor/note_editor_screen.dart';
 import '../help/help_guide_screen.dart';
 import '../meds/medication_screen.dart';
+import '../settings/settings_provider.dart';
 import '../settings/settings_screen.dart';
 import '../sounds/sound_library_screen.dart';
 import 'notification_center_screen.dart';
@@ -117,6 +118,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 icon: const Icon(Icons.search),
                 tooltip: 'بحث',
                 onPressed: () => setState(() => _searching = true),
+              ),
+              IconButton(
+                icon: const Icon(Icons.language),
+                tooltip: s.t('language'),
+                onPressed: () => _pickLanguage(context),
               ),
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
@@ -236,6 +242,55 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
   void _open(BuildContext context, Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  /// منتقي اللغة السريع من أعلى الشاشة — يفتح ورقة سفلية بكل اللغات المدعومة.
+  void _pickLanguage(BuildContext context) {
+    final st = context.read<SettingsProvider>();
+    final scheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+              child: Row(
+                children: [
+                  Icon(Icons.language, color: scheme.primary),
+                  const SizedBox(width: 10),
+                  Text(S.of(context).t('language'),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final e in S.languages.entries)
+                    RadioListTile<String>(
+                      value: e.key,
+                      groupValue: st.locale.languageCode,
+                      title: Text(e.value),
+                      activeColor: scheme.primary,
+                      onChanged: (v) {
+                        st.setLocale(Locale(v ?? 'en'));
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   PopupMenuItem<String> _menuItem(String value, IconData icon, String label) =>
