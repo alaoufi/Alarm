@@ -9,6 +9,7 @@ import '../../core/l10n/app_strings.dart';
 import '../../core/time/hijri_recurrence.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/reminder.dart';
+import '../../services/calendar_export.dart';
 import '../../services/med_occurrences.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/ui_kit.dart';
@@ -736,6 +737,14 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 final at = DateFormat('h:mm a', 'ar').format(r.time);
                 await SharePlus.instance.share(ShareParams(
                     text: '⏰ ${_labelOf(v)}\nالوقت: $at'));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event_available_outlined),
+              title: const Text('إضافة للتقويم'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await CalendarExport.addToCalendar(r, _labelOf(v));
               },
             ),
             ListTile(
