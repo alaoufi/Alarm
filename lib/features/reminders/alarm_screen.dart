@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -130,6 +132,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () async {
+                    if (!await _confirmDismiss()) return;
                     await NotificationService.instance.acknowledgeAlarm(_base);
                     if (context.mounted) Navigator.pop(context);
                   },
@@ -143,6 +146,53 @@ class _AlarmScreenState extends State<AlarmScreen> {
         ),
       ),
     );
+  }
+
+  /// «لا يُفوَّت»: عند تفعيل الخيار، يطلب حلّ مسألة بسيطة قبل إيقاف المنبّه.
+  Future<bool> _confirmDismiss() async {
+    final settings = context.read<SettingsProvider>();
+    if (!settings.mathToDismiss) return true;
+    final rnd = Random();
+    final a = rnd.nextInt(8) + 2;
+    final b = rnd.nextInt(8) + 2;
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('لإيقاف المنبّه، احسب:'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('$a + $b = ؟',
+                style: const TextStyle(
+                    fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              textAlign: TextAlign.center,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('إلغاء')),
+          FilledButton(
+            onPressed: () {
+              if (int.tryParse(ctrl.text.trim()) == a + b) {
+                Navigator.pop(ctx, true);
+              }
+            },
+            child: const Text('تأكيد'),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
   }
 
   Future<void> _snooze(BuildContext context, S s) async {

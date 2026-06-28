@@ -21,6 +21,7 @@ import '../sounds/sound_library_screen.dart';
 import 'notification_center_screen.dart';
 import 'reliability_test_screen.dart';
 import 'reminder_defaults_screen.dart';
+import 'reminder_stats_screen.dart';
 import 'reminder_templates_sheet.dart';
 import 'reminders_provider.dart';
 import 'standalone_reminder_dialog.dart';
@@ -131,6 +132,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     case 'templates':
                       showReminderTemplates(context);
                       break;
+                    case 'stats':
+                      _open(context, const ReminderStatsScreen());
+                      break;
                     case 'med_mode':
                       _open(context, const MedicationScreen());
                       break;
@@ -152,6 +156,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   _menuItem('dashboard', Icons.dashboard_outlined, 'لوحة اليوم'),
                   _menuItem('templates', Icons.dashboard_customize_outlined,
                       'قوالب جاهزة'),
+                  _menuItem('stats', Icons.bar_chart, 'الإحصاءات'),
                   _menuItem(
                       'med_mode', Icons.medication_outlined, s.t('med_mode')),
                   _menuItem('reminder_defaults', Icons.tune,

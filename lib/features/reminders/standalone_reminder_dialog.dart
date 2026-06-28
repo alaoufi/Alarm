@@ -1231,6 +1231,19 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                   }
                                 : null,
                           ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            secondary: const Icon(Icons.calculate_outlined),
+                            title: const Text('لا يمكن تفويته'),
+                            subtitle: const Text(
+                                'حلّ مسألة بسيطة قبل إيقاف المنبّه (لكل المنبّهات).',
+                                style: TextStyle(fontSize: 11.5)),
+                            value: settings.mathToDismiss,
+                            onChanged: (v) async {
+                              await settings.setMathToDismiss(v);
+                              setState(() {});
+                            },
+                          ),
                           const SizedBox(height: 10),
                           label(s.t('rd_snooze')),
                           ListTile(

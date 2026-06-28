@@ -27,6 +27,7 @@ class SettingsProvider extends ChangeNotifier {
   int _briefingMinute = 0; // دقيقة الموجز الصباحيّ
   bool _autoRaiseVolume = true; // رفع صوت المنبّه تلقائيًّا عند الصامت/المنخفض
   bool _gradualVolume = false; // رفع صوت المنبّه بالتدرّج
+  bool _mathToDismiss = false; // «لا يُفوَّت»: حلّ مسألة بسيطة قبل إيقاف المنبّه
   int _defaultPreAlert = 0; // تنبيه قبل الوقت الافتراضي بالدقائق (0 = بلا)
   String? _customToneUri; // رابط نغمة مخصّصة من الجهاز (عند alarmTone=custom)
   String? _customToneTitle; // اسم النغمة المخصّصة للعرض
@@ -66,6 +67,7 @@ class SettingsProvider extends ChangeNotifier {
   int get briefingHour => _briefingHour;
   int get briefingMinute => _briefingMinute;
   bool get autoRaiseVolume => _autoRaiseVolume;
+  bool get mathToDismiss => _mathToDismiss;
   bool get gradualVolume => _gradualVolume;
   int get defaultPreAlert => _defaultPreAlert;
   String? get customToneUri => _customToneUri;
@@ -288,6 +290,7 @@ class SettingsProvider extends ChangeNotifier {
     _briefingMinute = prefs.getInt('briefing_minute') ?? 0;
     _autoRaiseVolume = prefs.getBool('auto_raise_volume') ?? true;
     _gradualVolume = prefs.getBool('gradual_volume') ?? false;
+    _mathToDismiss = prefs.getBool('math_to_dismiss') ?? false;
     _defaultPreAlert = prefs.getInt('default_pre_alert') ?? 0;
     NotificationService.instance.snoozeMinutes = _snoozeMinutes;
     _customToneUri = prefs.getString(_kCustomToneUri);
@@ -450,6 +453,13 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('auto_raise_volume', v);
+  }
+
+  Future<void> setMathToDismiss(bool v) async {
+    _mathToDismiss = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('math_to_dismiss', v);
   }
 
   Future<void> setMorningBriefing(bool v) async {
