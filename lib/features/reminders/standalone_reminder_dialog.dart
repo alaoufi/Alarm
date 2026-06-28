@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,15 +21,18 @@ import 'reminder_helpers.dart';
 import 'reminders_provider.dart';
 
 /// نوع المنبّه — يُغيّر الحقول الظاهرة والإعدادات الافتراضية.
-enum ReminderKind { general, medication, appointment, occasion }
+enum ReminderKind { general, medication, appointment, occasion, bills, travel, car }
 
 extension ReminderKindX on ReminderKind {
-  /// مفتاح ترجمة (يُحلّ عبر s.t في مكان الاستخدام).
+  /// مفتاح ترجمة (يُحلّ عبر s.t)؛ الأنواع الجديدة بنصّ عربيّ مباشر (s.t يُرجعه كما هو).
   String get label => switch (this) {
         ReminderKind.general => 'rk_general',
         ReminderKind.medication => 'rk_med',
         ReminderKind.appointment => 'rk_appt',
         ReminderKind.occasion => 'rk_occasion',
+        ReminderKind.bills => 'فواتير',
+        ReminderKind.travel => 'سفر',
+        ReminderKind.car => 'سيارة',
       };
 
   IconData get icon => switch (this) {
@@ -36,6 +40,9 @@ extension ReminderKindX on ReminderKind {
         ReminderKind.medication => Icons.medication_outlined,
         ReminderKind.appointment => Icons.event_outlined,
         ReminderKind.occasion => Icons.celebration_outlined,
+        ReminderKind.bills => Icons.receipt_long_outlined,
+        ReminderKind.travel => Icons.flight_takeoff_outlined,
+        ReminderKind.car => Icons.directions_car_outlined,
       };
 
   String get emoji => switch (this) {
@@ -43,6 +50,9 @@ extension ReminderKindX on ReminderKind {
         ReminderKind.medication => '💊 ',
         ReminderKind.appointment => '📅 ',
         ReminderKind.occasion => '🎉 ',
+        ReminderKind.bills => '🧾 ',
+        ReminderKind.travel => '✈️ ',
+        ReminderKind.car => '🚗 ',
       };
 
   String get titleLabel => switch (this) {
@@ -50,11 +60,31 @@ extension ReminderKindX on ReminderKind {
         ReminderKind.medication => 'med_name',
         ReminderKind.appointment => 'rd_title_appt',
         ReminderKind.occasion => 'rd_title_occasion',
+        ReminderKind.bills => 'اسم الفاتورة',
+        ReminderKind.travel => 'الوجهة',
+        ReminderKind.car => 'الخدمة/السيارة',
       };
 }
 
 /// وصف ودّي مختصر لفاصل الجرعات (جرعة ثمّ راحة).
 String _intervalHint(S s) => s.t('rd_interval_hint');
+
+/// أسماء الأشهر الهجريّة (1..12).
+const List<String> _hijriMonths = [
+  'محرّم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
+  'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة',
+];
+
+/// التاريخ الهجريّ المقابل لتاريخ ميلاديّ، بصيغة «١٥ رمضان ١٤٤٧ هـ».
+String _hijriStr(DateTime d) {
+  try {
+    final h = HijriCalendar.fromDate(d);
+    final m = (h.hMonth >= 1 && h.hMonth <= 12) ? _hijriMonths[h.hMonth - 1] : '';
+    return '${h.hDay} $m ${h.hYear} هـ';
+  } catch (_) {
+    return '';
+  }
+}
 
 /// رابط بحث خرائط جوجل لنصّ المكان (لاختيار الموقع ونسخ رابطه).
 Uri _mapsSearchUri(String query) {
@@ -134,11 +164,21 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
       (existing.intervalDays >= 2 ||
           existing.doseCount > 0 ||
           (existing.title?.contains('💊') ?? false));
+  final String _t0 = existing?.title ?? '';
   ReminderKind kind = existingIsMed
       ? ReminderKind.medication
-      : (existing?.location.isNotEmpty ?? false)
-          ? ReminderKind.appointment
-          : ReminderKind.general;
+      : _t0.contains('🧾')
+          ? ReminderKind.bills
+          : _t0.contains('✈️')
+              ? ReminderKind.travel
+              : _t0.contains('🚗')
+                  ? ReminderKind.car
+                  : _t0.contains('🎉')
+                      ? ReminderKind.occasion
+                      : ((existing?.location.isNotEmpty ?? false) ||
+                              _t0.contains('📅'))
+                          ? ReminderKind.appointment
+                          : ReminderKind.general;
   final doseCtrl = TextEditingController();
   // دواء: فاصل الأيام بين الجرعات (≥2 ⇒ «كل N يوم») + عدد جرعات الكورس (0 = مستمر).
   int intervalDays = existing?.intervalDays ?? 0;
@@ -172,6 +212,9 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                 ReminderKind.medication => const Color(0xFFE53935), // أحمر
                 ReminderKind.appointment => const Color(0xFF1E88E5), // أزرق
                 ReminderKind.occasion => const Color(0xFFF9A825), // ذهبي
+                ReminderKind.bills => const Color(0xFF00897B), // أخضر مزرقّ
+                ReminderKind.travel => const Color(0xFF5E35B1), // بنفسجي
+                ReminderKind.car => const Color(0xFF6D4C41), // بنّي
               };
           final accent = kindColor(kind);
           String two(int n) => n.toString().padLeft(2, '0');
@@ -213,6 +256,25 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                 importance = ReminderImportance.medium;
                 preAlerts.clear();
                 break;
+              case ReminderKind.bills:
+                repeat = ReminderRepeat.monthly; // فاتورة شهريّة غالبًا
+                importance = ReminderImportance.high;
+                preAlerts
+                  ..clear()
+                  ..add(1440); // تذكير قبل يوم
+                break;
+              case ReminderKind.travel:
+                repeat = ReminderRepeat.once;
+                importance = ReminderImportance.high;
+                preAlerts
+                  ..clear()
+                  ..add(1440);
+                break;
+              case ReminderKind.car:
+                repeat = ReminderRepeat.once;
+                importance = ReminderImportance.high;
+                preAlerts.clear();
+                break;
             }
           }
 
@@ -228,6 +290,9 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                 final pl = placeCtrl.text.trim();
                 return '${kind.emoji}$name${pl.isEmpty ? '' : ' @ $pl'}';
               case ReminderKind.occasion:
+              case ReminderKind.bills:
+              case ReminderKind.travel:
+              case ReminderKind.car:
                 return '${kind.emoji}$name';
               case ReminderKind.general:
                 return name;
@@ -243,7 +308,8 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
 
           // بطاقة منتقي (تاريخ/وقت) ثلاثيّة الأبعاد بشارة دائريّة وتدرّج.
           Widget pickerCard(
-                  IconData icon, String lbl, String value, VoidCallback onTap) =>
+                  IconData icon, String lbl, String value, VoidCallback onTap,
+                  {String? sub}) =>
               Expanded(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -309,6 +375,14 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14)),
+                                if (sub != null && sub.isNotEmpty)
+                                  Text(sub,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontSize: 10.5,
+                                          color: scheme.onSurface
+                                              .withOpacity(0.6))),
                               ],
                             ),
                           ),
@@ -652,7 +726,8 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                   Icons.calendar_today,
                                   s.t('rd_date'),
                                   '${date.year}/${two(date.month)}/${two(date.day)}',
-                                  pickDate),
+                                  pickDate,
+                                  sub: _hijriStr(date)),
                               const SizedBox(width: 10),
                             ],
                             pickerCard(Icons.access_time, s.t('rd_time'),
