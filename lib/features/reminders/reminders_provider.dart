@@ -82,6 +82,7 @@ class RemindersProvider extends ChangeNotifier {
     String attachmentPath = '',
     int intervalDays = 0,
     int doseCount = 0,
+    int? color,
     Reminder? existing,
   }) async {
     if (existing != null) {
@@ -100,6 +101,7 @@ class RemindersProvider extends ChangeNotifier {
       notificationId: notifId,
       intervalDays: intervalDays,
       doseCount: doseCount,
+      color: color,
     );
     final id = await _repo.insert(reminder);
     await NotificationService.instance.schedule(
@@ -186,6 +188,8 @@ class RemindersProvider extends ChangeNotifier {
     String title,
     TimeOfDay tod,
     Set<int> weekdays, {
+    ReminderImportance importance = ReminderImportance.high,
+    int? color,
     Reminder? existing,
   }) async {
     if (existing != null) {
@@ -200,7 +204,9 @@ class RemindersProvider extends ChangeNotifier {
         title: name,
         time: when,
         repeat: ReminderRepeat.weekly,
+        importance: importance,
         notificationId: _uniqueId(taken),
+        color: color,
       );
       final id = await _repo.insert(reminder);
       await NotificationService.instance
@@ -279,6 +285,7 @@ class RemindersProvider extends ChangeNotifier {
       notificationId: notifId,
       intervalDays: r.intervalDays,
       doseCount: r.doseCount,
+      color: r.color,
     );
     final id = await _repo.insert(copy);
     await NotificationService.instance
@@ -325,6 +332,7 @@ class RemindersProvider extends ChangeNotifier {
         notificationId: r.notificationId,
         intervalDays: r.intervalDays,
         doseCount: r.doseCount,
+        color: r.color,
       );
       await _repo.update(detached);
     }

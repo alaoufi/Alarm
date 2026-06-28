@@ -30,6 +30,9 @@ class Reminder {
   /// **دواء**: عدد جرعات الكورس (> 0 ⇒ يتوقّف بعدها). 0 = مستمر.
   final int doseCount;
 
+  /// لون اختياريّ للتنبيه (قيمة ARGB) — null = اللون التلقائيّ حسب المجال الزمنيّ.
+  final int? color;
+
   const Reminder({
     this.id,
     this.noteId,
@@ -44,6 +47,7 @@ class Reminder {
     required this.notificationId,
     this.intervalDays = 0,
     this.doseCount = 0,
+    this.color,
   });
 
   /// تنبيه مستقلّ (غير مرتبط بملاحظة).
@@ -64,6 +68,7 @@ class Reminder {
       'attachment': attachmentPath,
       'interval_days': intervalDays,
       'dose_count': doseCount,
+      'color': color,
     };
   }
 
@@ -86,6 +91,7 @@ class Reminder {
       attachmentPath: (map['attachment'] as String?) ?? '',
       intervalDays: (map['interval_days'] as int?) ?? 0,
       doseCount: (map['dose_count'] as int?) ?? 0,
+      color: map['color'] as int?,
     );
   }
 
@@ -103,6 +109,7 @@ class Reminder {
     int? notificationId,
     int? intervalDays,
     int? doseCount,
+    int? color,
   }) {
     return Reminder(
       id: id ?? this.id,
@@ -118,6 +125,7 @@ class Reminder {
       notificationId: notificationId ?? this.notificationId,
       intervalDays: intervalDays ?? this.intervalDays,
       doseCount: doseCount ?? this.doseCount,
+      color: color ?? this.color,
     );
   }
 }

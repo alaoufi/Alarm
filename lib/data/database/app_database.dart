@@ -15,7 +15,7 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   static const _dbName = 'mudhakkarati.db';
-  static const _dbVersion = 18;
+  static const _dbVersion = 19;
 
   Database? _db;
   Future<Database>? _opening;
@@ -255,6 +255,7 @@ class AppDatabase {
         attachment TEXT NOT NULL DEFAULT '',
         interval_days INTEGER NOT NULL DEFAULT 0,
         dose_count INTEGER NOT NULL DEFAULT 0,
+        color INTEGER,
         FOREIGN KEY (note_id) REFERENCES notes (id) ON DELETE CASCADE
       )
     ''');
@@ -379,6 +380,10 @@ class AppDatabase {
       // علامات ملوّنة: لون يختاره المستخدم (0 = اشتقاق تلقائيّ من الاسم).
       await db.execute(
           'ALTER TABLE tags ADD COLUMN color INTEGER NOT NULL DEFAULT 0');
+    }
+    if (oldVersion < 19) {
+      // لون اختياريّ لكل تنبيه (null = اللون التلقائيّ حسب المجال الزمنيّ).
+      await db.execute('ALTER TABLE reminders ADD COLUMN color INTEGER');
     }
   }
 

@@ -69,6 +69,30 @@ extension ReminderKindX on ReminderKind {
 /// وصف ودّي مختصر لفاصل الجرعات (جرعة ثمّ راحة).
 String _intervalHint(S s) => s.t('rd_interval_hint');
 
+/// لوحة ألوان التنبيه المتاحة (ARGB).
+const List<int> _reminderPalette = [
+  0xFF00897B, 0xFF1E88E5, 0xFF8E24AA, 0xFFF57C00,
+  0xFFE53935, 0xFF43A047, 0xFF6D4C41, 0xFF3949AB,
+];
+
+/// دائرة اختيار لون (null = تلقائيّ).
+Widget _colorSwatch(Color? c, bool selected) => Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: c ?? Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(
+            color: selected ? Colors.black87 : Colors.grey.withOpacity(0.4),
+            width: selected ? 3 : 1),
+      ),
+      child: c == null
+          ? const Icon(Icons.auto_awesome, size: 17)
+          : (selected
+              ? const Icon(Icons.check, color: Colors.white, size: 18)
+              : null),
+    );
+
 /// أسماء الأشهر الهجريّة (1..12).
 const List<String> _hijriMonths = [
   'محرّم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
@@ -254,6 +278,8 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
   final mapLinkCtrl = TextEditingController(text: existing?.location ?? '');
   // مرفق الدعوة (صورة/PDF) للموعد — اختياري.
   String attachmentPath = existing?.attachmentPath ?? '';
+  // لون اختياريّ للتنبيه (null = تلقائيّ حسب المجال الزمنيّ).
+  int? customColor = existing?.color;
 
   // عند **أول** إنشاء تنبيه جديد: اطلب فكّ كل القيود لضمان عمل المنبّه.
   if (existing == null) {
@@ -1077,6 +1103,26 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                               );
                             }).toList(),
                           ),
+                          const SizedBox(height: 14),
+                          label('🎨 لون التنبيه'),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 8,
+                            children: [
+                              GestureDetector(
+                                onTap: () =>
+                                    setState(() => customColor = null),
+                                child: _colorSwatch(null, customColor == null),
+                              ),
+                              for (final c in _reminderPalette)
+                                GestureDetector(
+                                  onTap: () =>
+                                      setState(() => customColor = c),
+                                  child: _colorSwatch(
+                                      Color(c), customColor == c),
+                                ),
+                            ],
+                          ),
                           if (repeat == ReminderRepeat.once) ...[
                             const SizedBox(height: 14),
                             label(s.t('pre_alerts')),
@@ -1274,6 +1320,8 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                     !isCourse) {
                                   await provider.setStandaloneWeekly(
                                       finalTitle, time, weekdays,
+                                      importance: importance,
+                                      color: customColor,
                                       existing: existing);
                                 } else {
                                   await provider.setStandalone(
@@ -1288,6 +1336,7 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                       attachmentPath: attachmentPath,
                                       intervalDays: hasInterval ? intervalDays : 0,
                                       doseCount: isMed ? doseCount : 0,
+                                      color: customColor,
                                       existing: existing);
                                 }
                                 if (context.mounted) Navigator.pop(context);

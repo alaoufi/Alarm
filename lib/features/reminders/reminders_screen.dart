@@ -312,6 +312,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
       if (list.isEmpty) continue;
       final accent = colors[key]!;
       out.add(_groupHeader(context, '${titles[key]}  (${list.length})', accent));
+      Color itemAccent(ReminderView v) =>
+          v.reminder.color != null ? Color(v.reminder.color!) : accent;
       if (_gridView) {
         out.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -323,13 +325,14 @@ class _RemindersScreenState extends State<RemindersScreen> {
             crossAxisSpacing: 8,
             childAspectRatio: 0.92,
             children: [
-              for (final v in list) _gridCard(context, s, provider, v, accent),
+              for (final v in list)
+                _gridCard(context, s, provider, v, itemAccent(v)),
             ],
           ),
         ));
       } else {
         for (final v in list) {
-          out.add(_tile(context, s, provider, v, accent));
+          out.add(_tile(context, s, provider, v, itemAccent(v)));
         }
       }
     }
