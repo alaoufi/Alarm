@@ -158,6 +158,10 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+    ),
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setState) {
@@ -229,36 +233,79 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                         color: scheme.primary, fontWeight: FontWeight.bold)),
               );
 
-          // بطاقة منتقي (تاريخ/وقت) صغيرة بحدّ ولمسة بارزة.
+          // بطاقة منتقي (تاريخ/وقت) ثلاثيّة الأبعاد بشارة دائريّة وتدرّج.
           Widget pickerCard(
                   IconData icon, String lbl, String value, VoidCallback onTap) =>
               Expanded(
-                child: Material(
-                  color: Theme.of(context).inputDecorationTheme.fillColor,
-                  elevation: 1,
-                  shadowColor: scheme.shadow.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(14),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: onTap,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 11),
-                      child: Row(children: [
-                        Icon(icon, size: 20, color: scheme.primary),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(lbl,
-                                style: Theme.of(context).textTheme.bodySmall),
-                            Text(value,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 14)),
-                          ],
-                        ),
-                      ]),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color.alphaBlend(
+                            scheme.primary.withOpacity(0.10), scheme.surface),
+                        Color.alphaBlend(
+                            scheme.primary.withOpacity(0.03), scheme.surface),
+                      ],
+                    ),
+                    border:
+                        Border.all(color: scheme.primary.withOpacity(0.18)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.10),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: onTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                        child: Row(children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  scheme.primary,
+                                  Color.alphaBlend(Colors.black.withOpacity(0.2),
+                                      scheme.primary),
+                                ],
+                              ),
+                            ),
+                            child: Icon(icon, size: 19, color: Colors.white),
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(lbl,
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall),
+                                Text(value,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                        ]),
+                      ),
                     ),
                   ),
                 ),
@@ -295,17 +342,66 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // العنوان (ثابت).
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 2, 20, 8),
+                  // رأس متدرّج ثلاثيّ الأبعاد بشارة بارزة (ثابت).
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          scheme.primary,
+                          Color.alphaBlend(
+                              Colors.black.withOpacity(0.18), scheme.primary),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: scheme.primary.withOpacity(0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
                     child: Row(children: [
-                      Icon(Icons.add_alarm, color: scheme.primary),
-                      const SizedBox(width: 10),
-                      Text(existing == null ? s.t('rd_new') : s.t('rd_edit'),
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.22),
+                        ),
+                        child: const Icon(Icons.add_alarm,
+                            color: Colors.white, size: 26),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              existing == null ? s.t('rd_new') : s.t('rd_edit'),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 19),
+                            ),
+                            Text(
+                              '${kind.emoji}${s.t(kind.label)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.85),
+                                  fontSize: 12.5),
+                            ),
+                          ],
+                        ),
+                      ),
                     ]),
                   ),
                   // المحتوى (قابل للتمرير).
@@ -849,7 +945,14 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                           const Spacer(),
                           FilledButton.icon(
                             style: FilledButton.styleFrom(
-                                minimumSize: const Size(130, 48)),
+                              minimumSize: const Size(140, 52),
+                              elevation: 6,
+                              shadowColor: scheme.primary.withOpacity(0.5),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              textStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
                             onPressed: () async {
                               final finalTitle = composeTitle();
                               final isMed = kind == ReminderKind.medication;
