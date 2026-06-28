@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/l10n/app_strings.dart';
@@ -31,6 +32,22 @@ class RemindersScreen extends StatefulWidget {
 class _RemindersScreenState extends State<RemindersScreen> {
   String _query = '';
   bool _searching = false;
+  bool _gridView = false; // false = قائمة، true = مربّعات (شبكة).
+  static const _kViewPref = 'reminders_grid_view';
+
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((p) {
+      if (mounted) setState(() => _gridView = p.getBool(_kViewPref) ?? false);
+    });
+  }
+
+  Future<void> _toggleView() async {
+    setState(() => _gridView = !_gridView);
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(_kViewPref, _gridView);
+  }
 
   static const _weekdayAr = {
     1: 'الإثنين',
@@ -84,6 +101,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
               ],
             )
           : gradientAppBar(context, s.t('reminders'), actions: [
+              IconButton(
+                icon: Icon(_gridView ? Icons.view_agenda_outlined : Icons.grid_view),
+                tooltip: _gridView ? 'عرض قائمة' : 'عرض مربّعات',
+                onPressed: _toggleView,
+              ),
               IconButton(
                 icon: const Icon(Icons.search),
                 tooltip: 'بحث',
@@ -328,8 +350,25 @@ class _RemindersScreenState extends State<RemindersScreen> {
       if (list.isEmpty) continue;
       final accent = colors[key]!;
       out.add(_groupHeader(context, '${titles[key]}  (${list.length})', accent));
-      for (final v in list) {
-        out.add(_tile(context, s, provider, v, accent));
+      if (_gridView) {
+        out.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.92,
+            children: [
+              for (final v in list) _gridCard(context, s, provider, v, accent),
+            ],
+          ),
+        ));
+      } else {
+        for (final v in list) {
+          out.add(_tile(context, s, provider, v, accent));
+        }
       }
     }
     return out;
@@ -514,6 +553,130 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// بطاقة مربّعة ثلاثية الأبعاد لعرض الشبكة (مربّعات).
+  Widget _gridCard(BuildContext context, S s, RemindersProvider provider,
+      ReminderView v, Color accent) {
+    final r = v.reminder;
+    final note = v.note;
+    final on = r.isActive;
+    final expired =
+        r.repeat == ReminderRepeat.once && r.time.isBefore(DateTime.now());
+    final dim = !on || expired;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
+    final timeStr = DateFormat('h:mm a', 'ar').format(r.time);
+    final label = _labelOf(v);
+    String repeatInfo;
+    if (r.intervalDays >= 2) {
+      repeatInfo = 'كل ${r.intervalDays} يوم';
+    } else if (r.repeat == ReminderRepeat.weekly) {
+      repeatInfo = '${_repeatLabel(s, r.repeat)} • ${_weekdayAr[r.time.weekday]}';
+    } else {
+      repeatInfo = _repeatLabel(s, r.repeat);
+    }
+    if (r.doseCount > 0) repeatInfo += ' • ${r.doseCount} جرعة';
+
+    final surface = scheme.surface;
+    final gradTop = Color.alphaBlend(accent.withOpacity(0.20), surface);
+    final gradBottom = Color.alphaBlend(accent.withOpacity(0.06), surface);
+
+    final onTap = r.isStandalone
+        ? () => showStandaloneReminderDialog(context, existing: r)
+        : () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NoteEditorScreen(noteId: note!.id),
+              ),
+            );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [gradTop, gradBottom],
+        ),
+        border: Border.all(color: accent.withOpacity(0.30), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(dark ? 0.45 : 0.13),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+          if (!dim)
+            BoxShadow(
+              color: accent.withOpacity(dark ? 0.30 : 0.18),
+              blurRadius: 14,
+              spreadRadius: -4,
+              offset: const Offset(0, 5),
+            ),
+        ],
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          onLongPress: () => _showActions(context, s, provider, v),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _alarmBadge(accent, dim, expired, dark),
+                    const Spacer(),
+                    Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: on,
+                        onChanged: (val) => provider.setActive(v, val),
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  timeStr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: dim ? scheme.outline : scheme.onSurface,
+                    decoration:
+                        expired ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                    color: dim
+                        ? scheme.outline
+                        : scheme.onSurface.withOpacity(0.85),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                _chip(
+                  accent,
+                  expired ? Icons.history_toggle_off : Icons.repeat,
+                  expired ? s.t('nc_expired') : repeatInfo,
+                ),
+              ],
             ),
           ),
         ),
