@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -725,6 +726,16 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 await provider.duplicate(v);
                 messenger.showSnackBar(
                     const SnackBar(content: Text('تم نسخ التنبيه')));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: const Text('مشاركة'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final at = DateFormat('h:mm a', 'ar').format(r.time);
+                await SharePlus.instance.share(ShareParams(
+                    text: '⏰ ${_labelOf(v)}\nالوقت: $at'));
               },
             ),
             ListTile(

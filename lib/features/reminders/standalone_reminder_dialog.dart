@@ -166,6 +166,14 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
       return StatefulBuilder(
         builder: (context, setState) {
           final scheme = Theme.of(context).colorScheme;
+          // ② لون مميّز لكل نوع منبّه (يُلوّن الرأس والمعاينة وزرّ الحفظ).
+          Color kindColor(ReminderKind k) => switch (k) {
+                ReminderKind.general => scheme.primary,
+                ReminderKind.medication => const Color(0xFFE53935), // أحمر
+                ReminderKind.appointment => const Color(0xFF1E88E5), // أزرق
+                ReminderKind.occasion => const Color(0xFFF9A825), // ذهبي
+              };
+          final accent = kindColor(kind);
           String two(int n) => n.toString().padLeft(2, '0');
           DateTime combined() => DateTime(
               date.year, date.month, date.day, time.hour, time.minute);
@@ -354,14 +362,14 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          scheme.primary,
+                          accent,
                           Color.alphaBlend(
-                              Colors.black.withOpacity(0.18), scheme.primary),
+                              Colors.black.withOpacity(0.18), accent),
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: scheme.primary.withOpacity(0.35),
+                          color: accent.withOpacity(0.35),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -411,6 +419,75 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ④ معاينة حيّة للتنبيه كما سيظهر في القائمة.
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color.alphaBlend(
+                                      accent.withOpacity(0.16), scheme.surface),
+                                  Color.alphaBlend(
+                                      accent.withOpacity(0.04), scheme.surface),
+                                ],
+                              ),
+                              border: BorderDirectional(
+                                  start: BorderSide(color: accent, width: 4)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.10),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(colors: [
+                                    accent,
+                                    Color.alphaBlend(
+                                        Colors.black.withOpacity(0.2), accent),
+                                  ]),
+                                ),
+                                child: Icon(kind.icon,
+                                    color: Colors.white, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(time.format(context),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 18)),
+                                    const SizedBox(height: 2),
+                                    Text(composeTitle(),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13)),
+                                    const SizedBox(height: 2),
+                                    Text(repeatLabel(repeat),
+                                        style: TextStyle(
+                                            fontSize: 11.5,
+                                            color: scheme.onSurface
+                                                .withOpacity(0.6))),
+                                  ],
+                                ),
+                              ),
+                            ]),
+                          ),
                           // نوع المنبّه (فوق العنوان) — يُكيّف الحقول والإعدادات.
                           label(s.t('rd_kind')),
                           Wrap(
@@ -581,6 +658,41 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             pickerCard(Icons.access_time, s.t('rd_time'),
                                 time.format(context), pickTime),
                           ]),
+                          const SizedBox(height: 10),
+                          // ⑥ اقتراحات وقت سريعة.
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              for (final (lbl, when) in <(String, DateTime)>[
+                                (
+                                  'بعد ساعة',
+                                  DateTime.now().add(const Duration(hours: 1))
+                                ),
+                                ('غدًا ٨ص', () {
+                                  final n = DateTime.now();
+                                  return DateTime(n.year, n.month, n.day + 1, 8);
+                                }()),
+                                ('الليلة ٩م', () {
+                                  final n = DateTime.now();
+                                  var d = DateTime(n.year, n.month, n.day, 21);
+                                  if (!d.isAfter(n)) {
+                                    d = d.add(const Duration(days: 1));
+                                  }
+                                  return d;
+                                }()),
+                              ])
+                                ActionChip(
+                                  avatar:
+                                      Icon(Icons.bolt, size: 16, color: accent),
+                                  label: Text(lbl),
+                                  onPressed: () => setState(() {
+                                    date = when;
+                                    time = TimeOfDay.fromDateTime(when);
+                                  }),
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: 14),
                           // التكرار المخصّص «كل N يوم» يحجب خيارات التكرار العاديّة.
                           if (intervalDays < 2) ...[
@@ -945,9 +1057,10 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                           const Spacer(),
                           FilledButton.icon(
                             style: FilledButton.styleFrom(
+                              backgroundColor: accent,
                               minimumSize: const Size(140, 52),
                               elevation: 6,
-                              shadowColor: scheme.primary.withOpacity(0.5),
+                              shadowColor: accent.withOpacity(0.5),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16)),
                               textStyle: const TextStyle(
