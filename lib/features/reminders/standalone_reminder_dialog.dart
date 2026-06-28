@@ -99,7 +99,34 @@ Future<void> _openExternal(Uri uri) async {
   } catch (_) {/* لا يوجد تطبيق يفتح الرابط */}
 }
 
-/// يختار مرفق الدعوة (صورة أو PDF) وينسخه لمجلد المرفقات. يعيد المسار أو null.
+/// هل المسار ملفّ صوتيّ؟
+bool _isAudioPath(String p) {
+  final l = p.toLowerCase();
+  return l.endsWith('.m4a') || l.endsWith('.mp3') || l.endsWith('.aac') ||
+      l.endsWith('.wav') || l.endsWith('.ogg');
+}
+
+/// نافذة تسجيل صوتيّ (تعيد مسار الملفّ المسجَّل أو null).
+Future<String?> _recordVoiceDialog(BuildContext context) async {
+  String? recorded;
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('تسجيل صوتي'),
+      content: AudioNoteWidget(
+        existingPath: null,
+        onRecorded: (p) => recorded = p,
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx), child: const Text('تم')),
+      ],
+    ),
+  );
+  return recorded;
+}
+
+/// يختار مرفق (صورة/PDF/تسجيل صوتيّ) ويعيد المسار أو null.
 Future<String?> _pickInvitation(BuildContext context) async {
   final choice = await showModalBottomSheet<String>(
     context: context,
@@ -116,6 +143,11 @@ Future<String?> _pickInvitation(BuildContext context) async {
           title: const Text('PDF'),
           onTap: () => Navigator.pop(context, 'pdf'),
         ),
+        ListTile(
+          leading: const Icon(Icons.mic_outlined),
+          title: const Text('تسجيل صوتي'),
+          onTap: () => Navigator.pop(context, 'audio'),
+        ),
       ]),
     ),
   );
@@ -123,6 +155,7 @@ Future<String?> _pickInvitation(BuildContext context) async {
     return EditorAttachments.pickImage(context);
   }
   if (choice == 'pdf') return EditorAttachments.pickPdf();
+  if (choice == 'audio' && context.mounted) return _recordVoiceDialog(context);
   return null;
 }
 
@@ -627,8 +660,48 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             decoration: InputDecoration(
                               labelText: s.t(kind.titleLabel),
                               prefixIcon: Icon(kind.icon),
+                              // مرفق صوتيّ سريع (لغير المواعيد — للمواعيد منتقٍ خاصّ).
+                              suffixIcon: kind == ReminderKind.appointment
+                                  ? null
+                                  : IconButton(
+                                      tooltip: 'تسجيل صوتي',
+                                      icon: Icon(
+                                          _isAudioPath(attachmentPath)
+                                              ? Icons.mic
+                                              : Icons.mic_none,
+                                          color: _isAudioPath(attachmentPath)
+                                              ? Colors.teal
+                                              : null),
+                                      onPressed: () async {
+                                        final p =
+                                            await _recordVoiceDialog(context);
+                                        if (p != null) {
+                                          setState(() => attachmentPath = p);
+                                        }
+                                      },
+                                    ),
                             ),
                           ),
+                          // مؤشّر المرفق الصوتيّ (يظهر فقط عند وجود تسجيل).
+                          if (kind != ReminderKind.appointment &&
+                              _isAudioPath(attachmentPath)) ...[
+                            const SizedBox(height: 8),
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading:
+                                  const Icon(Icons.mic, color: Colors.teal),
+                              title: const Text('مرفق صوتي'),
+                              subtitle: const Text('اضغط للاستماع'),
+                              onTap: () =>
+                                  EditorAttachments.openFile(attachmentPath),
+                              trailing: IconButton(
+                                tooltip: s.t('remove'),
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () =>
+                                    setState(() => attachmentPath = ''),
+                              ),
+                            ),
+                          ],
                           // حقل خاصّ بالدواء: الجرعة.
                           if (kind == ReminderKind.medication) ...[
                             const SizedBox(height: 10),
@@ -727,13 +800,18 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                         .endsWith('.pdf')
                                     ? const Icon(Icons.picture_as_pdf,
                                         color: Colors.red, size: 38)
-                                    : ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.file(File(attachmentPath),
-                                            width: 42,
-                                            height: 42,
-                                            fit: BoxFit.cover),
-                                      ),
+                                    : _isAudioPath(attachmentPath)
+                                        ? const Icon(Icons.mic,
+                                            color: Colors.teal, size: 38)
+                                        : ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Image.file(
+                                                File(attachmentPath),
+                                                width: 42,
+                                                height: 42,
+                                                fit: BoxFit.cover),
+                                          ),
                                 title: Text(s.t('rd_invite_attached')),
                                 subtitle: Text(attachmentPath.split('/').last,
                                     maxLines: 1,
