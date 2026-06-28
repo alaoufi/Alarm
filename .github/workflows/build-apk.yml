@@ -47,15 +47,17 @@ jobs:
       - name: Prepare APKs and version manifest
         run: |
           cd build/app/outputs/flutter-apk
-          # اسم ملفّ واضح للتطبيق: Alerts.apk (نسخة arm64 لمعظم الهواتف الحديثة)،
-          # وملفّ منفصل للهواتف القديمة 32-بت.
+          VER="1.0.${{ github.run_number }}"
+          # اسم الملفّ يتضمّن رقم النسخة (Alerts-1.0.N.apk)، مع إبقاء Alerts.apk
+          # ثابتًا كرابط دائم للتحديث الداخليّ.
+          cp app-arm64-v8a-release.apk "Alerts-$VER.apk"
           cp app-arm64-v8a-release.apk Alerts.apk
-          cp app-armeabi-v7a-release.apk Alerts-arm32.apk
+          cp app-armeabi-v7a-release.apk "Alerts-$VER-arm32.apk"
           ls -lh Alerts*.apk
-          # بيان النسخة للتحديث الداخليّ.
+          # بيان النسخة للتحديث الداخليّ (يشير إلى الرابط الثابت).
           cat > version.json <<EOF
           {
-            "version": "1.0.${{ github.run_number }}",
+            "version": "$VER",
             "build": ${{ github.run_number }},
             "url": "https://github.com/alaoufi/Alarm/releases/download/latest/Alerts.apk"
           }
@@ -77,11 +79,13 @@ jobs:
           body: |
             ملف APK لأحدث نسخة من تطبيق "Alerts" (1.0.${{ github.run_number }}).
 
-            • Alerts.apk  → الأنسب لمعظم الهواتف (arm64-v8a) — حمّل هذا.
-            • Alerts-arm32.apk → لهواتف أندرويد القديمة جداً (32-bit).
+            • Alerts-1.0.${{ github.run_number }}.apk → النسخة الحالية بالاسم ورقمها (arm64).
+            • Alerts.apk → رابط ثابت دائمًا لأحدث نسخة (نفس الملفّ).
+            • Alerts-1.0.${{ github.run_number }}-arm32.apk → لهواتف أندرويد القديمة (32-bit).
 
             ثبّته على هاتف أندرويد 8.0+. بُني من الـ commit ${{ github.sha }}.
           files: |
+            build/app/outputs/flutter-apk/Alerts-1.0.${{ github.run_number }}.apk
+            build/app/outputs/flutter-apk/Alerts-1.0.${{ github.run_number }}-arm32.apk
             build/app/outputs/flutter-apk/Alerts.apk
-            build/app/outputs/flutter-apk/Alerts-arm32.apk
             build/app/outputs/flutter-apk/version.json
