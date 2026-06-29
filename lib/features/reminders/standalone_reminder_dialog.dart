@@ -12,11 +12,9 @@ import '../../data/models/enums.dart';
 import '../editor/editor_attachments.dart';
 import 'alarm_permissions.dart';
 import '../../data/models/reminder.dart';
-import '../../services/ringtone_picker.dart';
-import '../../services/tone_preview.dart';
 import '../../widgets/time_wheel.dart';
 import '../settings/settings_provider.dart';
-import '../sounds/sound_catalog.dart';
+import 'reminder_defaults_screen.dart';
 import 'reminder_helpers.dart';
 import 'reminders_provider.dart';
 
@@ -1110,132 +1108,34 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                               ],
                             ),
                           ],
-                          const SizedBox(height: 10),
-                          label(s.t('rd_tone')),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: IconButton(
-                              tooltip: s.t('rd_listen'),
-                              icon: const Icon(Icons.play_circle_outline),
-                              onPressed: () {
-                                if (settings.alarmTone != 'custom') {
-                                  TonePreview.play(settings.alarmTone);
-                                }
-                              },
-                            ),
-                            title: Text(settings.alarmTone == 'custom'
-                                ? (settings.customToneTitle ?? s.t('rd_custom_tone'))
-                                : toneName(settings.alarmTone)),
-                            trailing: DropdownButton<String>(
-                              value: soundCatalog
-                                      .any((t) => t.id == settings.alarmTone)
-                                  ? settings.alarmTone
-                                  : 'custom',
-                              isDense: true,
-                              underline: const SizedBox.shrink(),
-                              items: [
-                                for (final t in soundCatalog)
-                                  DropdownMenuItem(
-                                      value: t.id, child: Text(t.name)),
-                                if (settings.alarmTone == 'custom')
-                                  DropdownMenuItem(
-                                      value: 'custom',
-                                      child: Text(
-                                          settings.customToneTitle ?? '${s.t('rd_custom')} 🎵',
-                                          overflow: TextOverflow.ellipsis)),
-                                DropdownMenuItem(
-                                    value: 'pick',
-                                    child: Text('${s.t('rd_from_device')} 📱')),
-                              ],
-                              onChanged: (v) async {
-                                if (v == null) return;
-                                if (v == 'pick') {
-                                  final uri = await RingtonePicker.pick(
-                                      current: settings.customToneUri);
-                                  if (uri != null) {
-                                    final t = await RingtonePicker.title(uri);
-                                    await settings.setCustomTone(uri, t);
-                                  }
-                                } else {
-                                  await settings.setAlarmTone(v);
-                                }
-                                setState(() {});
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          label(s.t('sound_options')),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            secondary: const Icon(Icons.volume_up_outlined),
-                            title: Text(s.t('auto_raise_volume')),
-                            subtitle: Text(s.t('auto_raise_volume_desc'),
-                                style: const TextStyle(fontSize: 11.5)),
-                            value: settings.autoRaiseVolume,
-                            onChanged: (v) async {
-                              await settings.setAutoRaiseVolume(v);
-                              setState(() {});
-                            },
-                          ),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            secondary: const Icon(Icons.trending_up),
-                            title: Text(s.t('gradual_volume')),
-                            subtitle: Text(s.t('gradual_volume_desc'),
-                                style: const TextStyle(fontSize: 11.5)),
-                            value: settings.gradualVolume,
-                            onChanged: settings.autoRaiseVolume
-                                ? (v) async {
-                                    await settings.setGradualVolume(v);
-                                    setState(() {});
-                                  }
-                                : null,
-                          ),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            secondary: const Icon(Icons.calculate_outlined),
-                            title: const Text('لا يمكن تفويته'),
-                            subtitle: const Text(
-                                'تحدٍّ قبل إيقاف المنبّه — يُختار نوعه (أرقام/كلمة) من الإعدادات.',
-                                style: TextStyle(fontSize: 11.5)),
-                            value: settings.mathToDismiss,
-                            onChanged: (v) async {
-                              await settings.setMathToDismiss(v);
-                              setState(() {});
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          label(s.t('rd_snooze')),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.snooze),
-                            title: Text(s.t('rd_snooze_dur')),
-                            subtitle: Text(settings.snoozeMinutes == 0
-                                ? s.t('rd_no_snooze')
-                                : '${settings.snoozeMinutes} ${s.t('minute')}'),
-                            trailing: DropdownButton<int>(
-                              value: const [0, 5, 10, 15, 30]
-                                      .contains(settings.snoozeMinutes)
-                                  ? settings.snoozeMinutes
-                                  : 10,
-                              underline: const SizedBox.shrink(),
-                              items: [
-                                DropdownMenuItem(
-                                    value: 0, child: Text(s.t('rd_no_snooze'))),
-                                DropdownMenuItem(
-                                    value: 5, child: Text('5 ${s.t('minute')}')),
-                                DropdownMenuItem(
-                                    value: 10, child: Text('10 ${s.t('minute')}')),
-                                DropdownMenuItem(
-                                    value: 15, child: Text('15 ${s.t('minute')}')),
-                                DropdownMenuItem(
-                                    value: 30, child: Text('30 ${s.t('minute')}')),
-                              ],
-                              onChanged: (v) async {
-                                if (v == null) return;
-                                await settings.setSnoozeMinutes(v);
-                                setState(() {});
-                              },
+                          const SizedBox(height: 6),
+                          // النغمة والغفوة والصوت ووضع «لا يُفوَّت» إعدادات عامّة
+                          // تُضبط مرّة واحدة من «الإعدادات الافتراضية» — لإبقاء
+                          // حوار الإضافة بسيطًا.
+                          Card(
+                            elevation: 0,
+                            margin: EdgeInsets.zero,
+                            color: accent.withOpacity(0.08),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(
+                                    color: accent.withOpacity(0.25))),
+                            child: ListTile(
+                              leading: Icon(Icons.tune, color: accent),
+                              title: Text(s.t('reminder_defaults'),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
+                              subtitle: Text(
+                                  '${s.t('rd_tone')} · ${s.t('rd_snooze')} · ${s.t('sound_options')}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11.5)),
+                              trailing: const Icon(Icons.chevron_left),
+                              onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ReminderDefaultsScreen())),
                             ),
                           ),
                         ],

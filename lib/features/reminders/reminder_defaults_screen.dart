@@ -101,6 +101,56 @@ class ReminderDefaultsScreen extends StatelessWidget {
             ]),
           ),
 
+          // وضع «لا يمكن تفويته»: نوع التحدّي قبل إيقاف المنبّه.
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(Icons.gpp_maybe_outlined,
+                        color: scheme.primary, size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text('لا يمكن تفويته',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14.5)),
+                    ),
+                  ]),
+                  const SizedBox(height: 4),
+                  Text('تحدٍّ قبل إيقاف المنبّه يمنع الإغلاق بالخطأ.',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          color: scheme.onSurface.withOpacity(0.6))),
+                  const SizedBox(height: 10),
+                  SegmentedButton<int>(
+                    showSelectedIcon: false,
+                    style: SegmentedButton.styleFrom(
+                        visualDensity: VisualDensity.compact),
+                    segments: const [
+                      ButtonSegment(
+                          value: 0,
+                          label: Text('معطّل'),
+                          icon: Icon(Icons.block, size: 16)),
+                      ButtonSegment(
+                          value: 1,
+                          label: Text('أرقام'),
+                          icon: Icon(Icons.calculate_outlined, size: 16)),
+                      ButtonSegment(
+                          value: 2,
+                          label: Text('كلمة'),
+                          icon: Icon(Icons.keyboard_outlined, size: 16)),
+                    ],
+                    selected: {st.dismissChallenge},
+                    onSelectionChanged: (v) =>
+                        st.setDismissChallenge(v.first),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           // موجز الصباح: إشعار يوميّ بعدد التذكيرات النشطة.
           Card(
             child: Column(children: [
