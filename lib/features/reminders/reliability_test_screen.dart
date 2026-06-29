@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/l10n/app_strings.dart';
 import '../../services/alarm_volume.dart';
 import '../../services/notification_service.dart';
+import '../settings/settings_provider.dart';
 import 'alarm_permissions.dart';
 
 /// شاشة «اختبار الموثوقية»: تتأكّد من أن الإشعارات والمنبّه يعملان فعليًّا على
@@ -72,6 +74,7 @@ class _ReliabilityTestScreenState extends State<ReliabilityTestScreen> {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
       appBar: AppBar(title: Text(s.t('reliability_test'))),
@@ -227,6 +230,51 @@ class _ReliabilityTestScreenState extends State<ReliabilityTestScreen> {
                     onPressed: _testAlarm,
                     icon: const Icon(Icons.alarm_add),
                     label: const Text('جدولة منبّه تجريبي'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // وضع «لا يمكن تفويته»: تفعيله واختيار نوع التحدّي (أرقام/كلمة)
+          // لتجربته مع المنبّه التجريبيّ أعلاه.
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _CardTitle(
+                      icon: Icons.gpp_maybe_outlined,
+                      title: 'لا يمكن تفويته'),
+                  const SizedBox(height: 4),
+                  const Text(
+                      'عند تفعيله يلزم حلّ تحدٍّ قبل إيقاف المنبّه (يُخفى زرّ '
+                      'الإيقاف من الإشعار). جرّبه مع المنبّه التجريبيّ أعلاه.',
+                      style: TextStyle(fontSize: 13)),
+                  const SizedBox(height: 10),
+                  SegmentedButton<int>(
+                    showSelectedIcon: false,
+                    style: SegmentedButton.styleFrom(
+                        visualDensity: VisualDensity.compact),
+                    segments: const [
+                      ButtonSegment(
+                          value: 0,
+                          label: Text('معطّل'),
+                          icon: Icon(Icons.block, size: 16)),
+                      ButtonSegment(
+                          value: 1,
+                          label: Text('أرقام'),
+                          icon: Icon(Icons.calculate_outlined, size: 16)),
+                      ButtonSegment(
+                          value: 2,
+                          label: Text('كلمة'),
+                          icon: Icon(Icons.keyboard_outlined, size: 16)),
+                    ],
+                    selected: {settings.dismissChallenge},
+                    onSelectionChanged: (v) =>
+                        settings.setDismissChallenge(v.first),
                   ),
                 ],
               ),
