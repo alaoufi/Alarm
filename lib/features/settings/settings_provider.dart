@@ -298,6 +298,7 @@ class SettingsProvider extends ChangeNotifier {
         ((prefs.getBool('math_to_dismiss') ?? false) ? 1 : 0);
     _defaultPreAlert = prefs.getInt('default_pre_alert') ?? 0;
     NotificationService.instance.snoozeMinutes = _snoozeMinutes;
+    NotificationService.instance.cantMiss = _dismissChallenge != 0;
     _customToneUri = prefs.getString(_kCustomToneUri);
     _customToneTitle = prefs.getString(_kCustomToneTitle);
     _customToneSeq = prefs.getInt(_kCustomToneSeq) ?? 0;
@@ -463,6 +464,7 @@ class SettingsProvider extends ChangeNotifier {
   /// تعيين نوع تحدّي الإيقاف (0 معطّل · 1 أرقام · 2 كلمة).
   Future<void> setDismissChallenge(int v) async {
     _dismissChallenge = v;
+    NotificationService.instance.cantMiss = v != 0;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('dismiss_challenge', v);

@@ -39,6 +39,10 @@ class NotificationService {
   /// مدّة الغفوة بالدقائق (0 = بلا غفوة). تُضبط من الإعدادات.
   int snoozeMinutes = 10;
 
+  /// «لا يُفوَّت» مفعَّل: نمنع زرّ «إيقاف» من الإشعار حتى لا يُغلَق دون تحدّي،
+  /// ونوجّه النقر إلى شاشة المنبّه (حيث يُطلَب الحساب/كتابة الكلمة). تُضبط من الإعدادات.
+  bool cantMiss = false;
+
   /// «وضع عدم النسيان» للتذكيرات الحرجة: يُعاد التنبيه تلقائيًّا حتى التأكيد.
   /// عدد مرّات الإعادة والفاصل بينها (يُضبطان لاحقًا من الإعدادات).
   int forgetRepeats = 4;
@@ -223,8 +227,11 @@ class NotificationService {
         if (snoozeMinutes > 0)
           AndroidNotificationAction(_snoozeAction, 'غفوة',
               showsUserInterface: false, cancelNotification: true),
-        const AndroidNotificationAction(_dismissAction, 'إيقاف',
-            showsUserInterface: false, cancelNotification: true),
+        // مع «لا يُفوَّت» نُخفي زرّ الإيقاف المباشر: يجب فتح المنبّه وإكمال
+        // التحدّي (حساب/كتابة كلمة) لإيقافه — فلا يُغلَق من الإشعار بالخطأ.
+        if (!cantMiss)
+          const AndroidNotificationAction(_dismissAction, 'إيقاف',
+              showsUserInterface: false, cancelNotification: true),
       ],
     );
   }
@@ -455,9 +462,10 @@ class NotificationService {
         await _scheduleSnooze(base, payload);
         return;
       default:
-        // ضغط على جسم الإشعار: تذكير حرج ⇒ شاشة المنبّه، وإلا افتح الملاحظة.
+        // ضغط على جسم الإشعار: تذكير حرج (أو وضع «لا يُفوَّت») ⇒ شاشة المنبّه،
+        // وإلا افتح الملاحظة.
         final imp = _extractStr(payload, 'imp:');
-        if (imp == 'critical' && onAlarm != null && !fromBackground) {
+        if ((imp == 'critical' || cantMiss) && onAlarm != null && !fromBackground) {
           onAlarm!({
             'title': _extractStr(payload, 'title:') ?? '⏰',
             'body': _extractStr(payload, 'body:') ?? '',
