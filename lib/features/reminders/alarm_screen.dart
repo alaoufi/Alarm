@@ -174,48 +174,74 @@ class _AlarmScreenState extends State<AlarmScreen> {
     );
   }
 
-  /// «لا يُفوَّت»: عند تفعيل الخيار، يطلب حلّ مسألة بسيطة قبل إيقاف المنبّه.
+  /// كلمات بسيطة لتحدّي «اكتب الكلمة» (يجب نسخها كما هي قبل الإيقاف).
+  static const _dismissWords = [
+    'تنبيه',
+    'استيقظ',
+    'انتهى',
+    'جاهز',
+    'حاضر',
+    'صباح',
+    'نشاط',
+    'تذكير',
+    'موعد',
+    'إنجاز',
+  ];
+
+  /// «لا يُفوَّت»: حسب الإعداد إمّا حلّ مسألة أرقام أو كتابة كلمة قبل الإيقاف.
   Future<bool> _confirmDismiss() async {
     final settings = context.read<SettingsProvider>();
-    if (!settings.mathToDismiss) return true;
+    final mode = settings.dismissChallenge; // 0 معطّل · 1 أرقام · 2 كلمة
+    if (mode == 0) return true;
     final rnd = Random();
-    final a = rnd.nextInt(8) + 2;
-    final b = rnd.nextInt(8) + 2;
     final ctrl = TextEditingController();
+
+    // نُجهّز السؤال والمطابقة حسب النوع.
+    final bool isWord = mode == 2;
+    final int a = rnd.nextInt(8) + 2;
+    final int b = rnd.nextInt(8) + 2;
+    final String word = _dismissWords[rnd.nextInt(_dismissWords.length)];
+
+    bool matches() {
+      final t = ctrl.text.trim();
+      return isWord ? t == word : int.tryParse(t) == a + b;
+    }
+
     final ok = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('لإيقاف المنبّه، احسب:'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('$a + $b = ؟',
-                style: const TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: ctrl,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(isWord ? 'لإيقاف المنبّه، اكتب الكلمة:' : 'لإيقاف المنبّه، احسب:'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(isWord ? word : '$a + $b = ؟',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 26, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                keyboardType:
+                    isWord ? TextInputType.text : TextInputType.number,
+                autofocus: true,
+                textAlign: TextAlign.center,
+                onChanged: (_) => setLocal(() {}),
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('إلغاء')),
+            FilledButton(
+              onPressed: matches() ? () => Navigator.pop(ctx, true) : null,
+              child: const Text('تأكيد'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('إلغاء')),
-          FilledButton(
-            onPressed: () {
-              if (int.tryParse(ctrl.text.trim()) == a + b) {
-                Navigator.pop(ctx, true);
-              }
-            },
-            child: const Text('تأكيد'),
-          ),
-        ],
       ),
     );
     return ok == true;

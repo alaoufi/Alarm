@@ -1196,7 +1196,7 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             secondary: const Icon(Icons.calculate_outlined),
                             title: const Text('لا يمكن تفويته'),
                             subtitle: const Text(
-                                'حلّ مسألة بسيطة قبل إيقاف المنبّه (لكل المنبّهات).',
+                                'تحدٍّ قبل إيقاف المنبّه — يُختار نوعه (أرقام/كلمة) من الإعدادات.',
                                 style: TextStyle(fontSize: 11.5)),
                             value: settings.mathToDismiss,
                             onChanged: (v) async {

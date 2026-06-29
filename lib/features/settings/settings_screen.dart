@@ -353,13 +353,39 @@ class SettingsScreen extends StatelessWidget {
       // إعدادات افتراضية للتنبيه (نغمة/غفوة/قبل الوقت…).
       _nav(context, Icons.tune, s.t('reminder_defaults'),
           const ReminderDefaultsScreen()),
-      // وضع «لا يُفوَّت»: حلّ مسألة بسيطة قبل إيقاف المنبّه.
-      SwitchListTile(
-        secondary: const Icon(Icons.calculate_outlined),
+      // وضع «لا يُفوَّت»: اختيار نوع التحدّي قبل إيقاف المنبّه.
+      ListTile(
+        leading: const Icon(Icons.gpp_maybe_outlined),
         title: const Text('وضع لا يُفوَّت'),
-        subtitle: const Text('احسب مسألة بسيطة قبل إيقاف المنبّه'),
-        value: st.mathToDismiss,
-        onChanged: st.setMathToDismiss,
+        subtitle: const Text('تحدٍّ قبل إيقاف المنبّه يمنع الإغلاق بالخطأ'),
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: SegmentedButton<int>(
+            showSelectedIcon: false,
+            style: SegmentedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+            ),
+            segments: const [
+              ButtonSegment(
+                  value: 0,
+                  label: Text('معطّل'),
+                  icon: Icon(Icons.block, size: 16)),
+              ButtonSegment(
+                  value: 1,
+                  label: Text('أرقام'),
+                  icon: Icon(Icons.calculate_outlined, size: 16)),
+              ButtonSegment(
+                  value: 2,
+                  label: Text('كلمة'),
+                  icon: Icon(Icons.keyboard_outlined, size: 16)),
+            ],
+            selected: {st.dismissChallenge},
+            onSelectionChanged: (v) => st.setDismissChallenge(v.first),
+          ),
+        ),
       ),
       const Divider(height: 1),
       _miniHeader(context, 'نغمات كلاسيكية'),
