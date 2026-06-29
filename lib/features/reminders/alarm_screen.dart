@@ -174,33 +174,39 @@ class _AlarmScreenState extends State<AlarmScreen> {
     );
   }
 
-  /// كلمات بسيطة لتحدّي «اكتب الكلمة» (يجب نسخها كما هي قبل الإيقاف).
-  static const _dismissWords = [
-    'تنبيه',
-    'استيقظ',
-    'انتهى',
-    'جاهز',
-    'حاضر',
-    'صباح',
-    'نشاط',
-    'تذكير',
-    'موعد',
-    'إنجاز',
-  ];
+  /// كلمات بسيطة لتحدّي «اكتب الكلمة» — بلغة التطبيق المختارة (تُنسَخ كما هي).
+  static const Map<String, List<String>> _dismissWords = {
+    'ar': ['تنبيه', 'استيقظ', 'جاهز', 'حاضر', 'صباح', 'تذكير'],
+    'en': ['alert', 'awake', 'ready', 'done', 'morning', 'wake'],
+    'es': ['alerta', 'listo', 'hecho', 'aviso', 'hora', 'dia'],
+    'de': ['wecker', 'wach', 'bereit', 'fertig', 'morgen', 'alarm'],
+    'fr': ['alerte', 'reveil', 'pret', 'fait', 'matin', 'jour'],
+    'id': ['alarm', 'bangun', 'siap', 'selesai', 'pagi', 'ingat'],
+    'it': ['sveglia', 'sveglio', 'pronto', 'fatto', 'mattino', 'allarme'],
+    'ms': ['jaga', 'siap', 'selesai', 'pagi', 'ingat', 'amaran'],
+    'fil': ['gising', 'handa', 'tapos', 'umaga', 'alala', 'alerto'],
+    'hi': ['सतर्क', 'जागो', 'तैयार', 'हुआ', 'सुबह', 'याद'],
+    'bn': ['সতর্ক', 'জাগো', 'প্রস্তুত', 'সকাল', 'মনে', 'প্রস্তুতি'],
+    'fa': ['هشدار', 'بیدار', 'آماده', 'انجام', 'صبح', 'یادآور'],
+    'ru': ['будильник', 'проснись', 'готов', 'сделано', 'утро', 'сигнал'],
+    'tr': ['alarm', 'uyan', 'hazır', 'tamam', 'sabah', 'anımsat'],
+  };
 
   /// «لا يُفوَّت»: حسب الإعداد إمّا حلّ مسألة أرقام أو كتابة كلمة قبل الإيقاف.
   Future<bool> _confirmDismiss() async {
+    final s = S.of(context);
     final settings = context.read<SettingsProvider>();
     final mode = settings.dismissChallenge; // 0 معطّل · 1 أرقام · 2 كلمة
     if (mode == 0) return true;
     final rnd = Random();
     final ctrl = TextEditingController();
 
-    // نُجهّز السؤال والمطابقة حسب النوع.
+    // نُجهّز السؤال والمطابقة حسب النوع، والكلمة بلغة التطبيق.
     final bool isWord = mode == 2;
     final int a = rnd.nextInt(8) + 2;
     final int b = rnd.nextInt(8) + 2;
-    final String word = _dismissWords[rnd.nextInt(_dismissWords.length)];
+    final words = _dismissWords[s.locale.languageCode] ?? _dismissWords['en']!;
+    final String word = words[rnd.nextInt(words.length)];
 
     bool matches() {
       final t = ctrl.text.trim();
@@ -212,7 +218,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: Text(isWord ? 'لإيقاف المنبّه، اكتب الكلمة:' : 'لإيقاف المنبّه، احسب:'),
+          title: Text(isWord ? s.t('dismiss_word') : s.t('dismiss_calc')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -235,10 +241,10 @@ class _AlarmScreenState extends State<AlarmScreen> {
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('إلغاء')),
+                child: Text(s.t('cancel'))),
             FilledButton(
               onPressed: matches() ? () => Navigator.pop(ctx, true) : null,
-              child: const Text('تأكيد'),
+              child: Text(s.t('confirm')),
             ),
           ],
         ),

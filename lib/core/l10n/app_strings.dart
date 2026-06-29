@@ -520,6 +520,8 @@ class S {
     'adherence': 'الالتزام',
     'no_med_log': 'لا سجلّ جرعات بعد',
     'privacy_disclaimer': 'الخصوصية وإخلاء المسؤولية',
+    'dismiss_calc': 'لإيقاف المنبّه، احسب:',
+    'dismiss_word': 'لإيقاف المنبّه، اكتب الكلمة:',
   };
 
   static const Map<String, String> _en = {
@@ -982,6 +984,8 @@ class S {
     'adherence': 'Adherence',
     'no_med_log': 'No dose log yet',
     'privacy_disclaimer': 'Privacy & Disclaimer',
+    'dismiss_calc': 'To dismiss, calculate:',
+    'dismiss_word': 'To dismiss, type the word:',
   };
 
   static const Map<String, String> _tr = {
@@ -1444,6 +1448,8 @@ class S {
     'adherence': 'Uyum',
     'no_med_log': 'Henüz doz kaydı yok',
     'privacy_disclaimer': 'Gizlilik ve Sorumluluk Reddi',
+    'dismiss_calc': 'Kapatmak için hesapla:',
+    'dismiss_word': 'Kapatmak için kelimeyi yaz:',
   };
 
   static const Map<String, String> _es = {
@@ -1906,6 +1912,8 @@ class S {
     'alarm_tone': 'Tono',
     'snooze': 'Posponer',
     'privacy_disclaimer': 'Privacidad y aviso legal',
+    'dismiss_calc': 'Para descartar, calcula:',
+    'dismiss_word': 'Para descartar, escribe la palabra:',
   };
 
   static const Map<String, String> _de = {
@@ -2368,6 +2376,8 @@ class S {
     'reminder_defaults': 'Standard-Erinnerungseinstellungen',
     'alarm_tone': 'Ton',
     'snooze': 'Schlummern',
+    'dismiss_calc': 'Zum Beenden rechne:',
+    'dismiss_word': 'Zum Beenden tippe das Wort:',
   };
 
   static const Map<String, String> _fil = {
@@ -2810,6 +2820,8 @@ class S {
     'adherence': 'Pagsunod',
     'no_med_log': 'Wala pang record',
     'privacy_disclaimer': 'Privacy at Disclaimer',
+    'dismiss_calc': 'Para i-dismiss, kalkulahin:',
+    'dismiss_word': 'Para i-dismiss, i-type ang salita:',
   };
 
   static const Map<String, String> _fr = {
@@ -3272,6 +3284,8 @@ class S {
     'reminder_defaults': 'Réglages de rappel par défaut',
     'alarm_tone': 'Sonnerie',
     'snooze': 'Répéter',
+    'dismiss_calc': 'Pour arrêter, calcule :',
+    'dismiss_word': 'Pour arrêter, tape le mot :',
   };
 
   static const Map<String, String> _id = {
@@ -3734,6 +3748,8 @@ class S {
     'reminder_defaults': 'Setelan pengingat default',
     'alarm_tone': 'Nada',
     'snooze': 'Tunda',
+    'dismiss_calc': 'Untuk menutup, hitung:',
+    'dismiss_word': 'Untuk menutup, ketik kata:',
   };
 
   static const Map<String, String> _it = {
@@ -4176,6 +4192,8 @@ class S {
     'adherence': 'Aderenza',
     'no_med_log': 'Nessun registro',
     'privacy_disclaimer': 'Privacy e avvertenze',
+    'dismiss_calc': 'Per chiudere, calcola:',
+    'dismiss_word': 'Per chiudere, scrivi la parola:',
   };
 
   static const Map<String, String> _ms = {
@@ -4618,6 +4636,8 @@ class S {
     'adherence': 'Kepatuhan',
     'no_med_log': 'Tiada rekod lagi',
     'privacy_disclaimer': 'Privasi & Penafian',
+    'dismiss_calc': 'Untuk tutup, kira:',
+    'dismiss_word': 'Untuk tutup, taip perkataan:',
   };
 
   static const Map<String, String> _hi = {
@@ -5060,6 +5080,8 @@ class S {
     'adherence': 'पालन',
     'no_med_log': 'अभी कोई रिकॉर्ड नहीं',
     'privacy_disclaimer': 'गोपनीयता और अस्वीकरण',
+    'dismiss_calc': 'बंद करने के लिए हल करें:',
+    'dismiss_word': 'बंद करने के लिए शब्द लिखें:',
   };
 
   static const Map<String, String> _bn = {
@@ -5502,6 +5524,8 @@ class S {
     'adherence': 'মেনে চলা',
     'no_med_log': 'এখনো কোনো রেকর্ড নেই',
     'privacy_disclaimer': 'গোপনীয়তা ও দাবিত্যাগ',
+    'dismiss_calc': 'বন্ধ করতে হিসাব করুন:',
+    'dismiss_word': 'বন্ধ করতে শব্দটি লিখুন:',
   };
 
   static const Map<String, String> _fa = {
@@ -5944,6 +5968,8 @@ class S {
     'adherence': 'پایبندی',
     'no_med_log': 'هنوز سابقه‌ای نیست',
     'privacy_disclaimer': 'حریم خصوصی و سلب مسئولیت',
+    'dismiss_calc': 'برای خاموش کردن، حساب کن:',
+    'dismiss_word': 'برای خاموش کردن، کلمه را بنویس:',
   };
 
   static const Map<String, String> _ru = {
@@ -6386,6 +6412,8 @@ class S {
     'adherence': 'Соблюдение',
     'no_med_log': 'Пока нет записей',
     'privacy_disclaimer': 'Конфиденциальность и оговорка',
+    'dismiss_calc': 'Чтобы выключить, посчитайте:',
+    'dismiss_word': 'Чтобы выключить, наберите слово:',
   };
 }
 
