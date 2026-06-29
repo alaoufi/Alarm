@@ -522,6 +522,18 @@ class S {
     'privacy_disclaimer': 'الخصوصية وإخلاء المسؤولية',
     'dismiss_calc': 'لإيقاف المنبّه، احسب:',
     'dismiss_word': 'لإيقاف المنبّه، اكتب الكلمة:',
+    'view_list_mode': 'عرض قائمة',
+    'view_grid_mode': 'عرض مربّعات',
+    'search_reminders_hint': 'ابحث في التنبيهات…',
+    'voice_reminder': 'تنبيه بالصوت',
+    'no_results_for': 'لا نتائج لـ',
+    'grp_today': 'اليوم',
+    'grp_tomorrow': 'غدًا',
+    'grp_week': 'هذا الأسبوع',
+    'grp_later': 'لاحقًا',
+    'grp_stopped': 'متوقّف / منتهٍ',
+    'today_board': 'لوحة اليوم',
+    'templates_ready': 'قوالب جاهزة',
   };
 
   static const Map<String, String> _en = {
@@ -986,6 +998,18 @@ class S {
     'privacy_disclaimer': 'Privacy & Disclaimer',
     'dismiss_calc': 'To dismiss, calculate:',
     'dismiss_word': 'To dismiss, type the word:',
+    'view_list_mode': 'List view',
+    'view_grid_mode': 'Grid view',
+    'search_reminders_hint': 'Search reminders…',
+    'voice_reminder': 'Voice reminder',
+    'no_results_for': 'No results for',
+    'grp_today': 'Today',
+    'grp_tomorrow': 'Tomorrow',
+    'grp_week': 'This week',
+    'grp_later': 'Later',
+    'grp_stopped': 'Stopped / ended',
+    'today_board': 'Today board',
+    'templates_ready': 'Templates',
   };
 
   static const Map<String, String> _tr = {
@@ -1450,6 +1474,18 @@ class S {
     'privacy_disclaimer': 'Gizlilik ve Sorumluluk Reddi',
     'dismiss_calc': 'Kapatmak için hesapla:',
     'dismiss_word': 'Kapatmak için kelimeyi yaz:',
+    'view_list_mode': 'Liste görünümü',
+    'view_grid_mode': 'Izgara görünümü',
+    'search_reminders_hint': 'Hatırlatıcı ara…',
+    'voice_reminder': 'Sesli hatırlatıcı',
+    'no_results_for': 'Sonuç yok:',
+    'grp_today': 'Bugün',
+    'grp_tomorrow': 'Yarın',
+    'grp_week': 'Bu hafta',
+    'grp_later': 'Sonra',
+    'grp_stopped': 'Durduruldu / bitti',
+    'today_board': 'Bugün panosu',
+    'templates_ready': 'Şablonlar',
   };
 
   static const Map<String, String> _es = {
@@ -1914,6 +1950,18 @@ class S {
     'privacy_disclaimer': 'Privacidad y aviso legal',
     'dismiss_calc': 'Para descartar, calcula:',
     'dismiss_word': 'Para descartar, escribe la palabra:',
+    'view_list_mode': 'Vista de lista',
+    'view_grid_mode': 'Vista de cuadrícula',
+    'search_reminders_hint': 'Buscar recordatorios…',
+    'voice_reminder': 'Recordatorio por voz',
+    'no_results_for': 'Sin resultados para',
+    'grp_today': 'Hoy',
+    'grp_tomorrow': 'Mañana',
+    'grp_week': 'Esta semana',
+    'grp_later': 'Más tarde',
+    'grp_stopped': 'Detenido / finalizado',
+    'today_board': 'Panel de hoy',
+    'templates_ready': 'Plantillas',
   };
 
   static const Map<String, String> _de = {
@@ -2378,6 +2426,18 @@ class S {
     'snooze': 'Schlummern',
     'dismiss_calc': 'Zum Beenden rechne:',
     'dismiss_word': 'Zum Beenden tippe das Wort:',
+    'view_list_mode': 'Listenansicht',
+    'view_grid_mode': 'Rasteransicht',
+    'search_reminders_hint': 'Erinnerungen suchen…',
+    'voice_reminder': 'Sprach-Erinnerung',
+    'no_results_for': 'Keine Ergebnisse für',
+    'grp_today': 'Heute',
+    'grp_tomorrow': 'Morgen',
+    'grp_week': 'Diese Woche',
+    'grp_later': 'Später',
+    'grp_stopped': 'Gestoppt / beendet',
+    'today_board': 'Heute-Übersicht',
+    'templates_ready': 'Vorlagen',
   };
 
   static const Map<String, String> _fil = {
@@ -2822,6 +2882,18 @@ class S {
     'privacy_disclaimer': 'Privacy at Disclaimer',
     'dismiss_calc': 'Para i-dismiss, kalkulahin:',
     'dismiss_word': 'Para i-dismiss, i-type ang salita:',
+    'view_list_mode': 'Tingnang listahan',
+    'view_grid_mode': 'Tingnang grid',
+    'search_reminders_hint': 'Maghanap ng paalala…',
+    'voice_reminder': 'Paalalang boses',
+    'no_results_for': 'Walang resulta para sa',
+    'grp_today': 'Ngayon',
+    'grp_tomorrow': 'Bukas',
+    'grp_week': 'Ngayong linggo',
+    'grp_later': 'Mamaya',
+    'grp_stopped': 'Tigil / tapos',
+    'today_board': 'Board ngayon',
+    'templates_ready': 'Mga template',
   };
 
   static const Map<String, String> _fr = {
@@ -3286,6 +3358,18 @@ class S {
     'snooze': 'Répéter',
     'dismiss_calc': 'Pour arrêter, calcule :',
     'dismiss_word': 'Pour arrêter, tape le mot :',
+    'view_list_mode': 'Vue liste',
+    'view_grid_mode': 'Vue grille',
+    'search_reminders_hint': 'Rechercher des rappels…',
+    'voice_reminder': 'Rappel vocal',
+    'no_results_for': 'Aucun résultat pour',
+    'grp_today': 'Aujourd’hui',
+    'grp_tomorrow': 'Demain',
+    'grp_week': 'Cette semaine',
+    'grp_later': 'Plus tard',
+    'grp_stopped': 'Arrêté / terminé',
+    'today_board': 'Tableau du jour',
+    'templates_ready': 'Modèles',
   };
 
   static const Map<String, String> _id = {
@@ -3750,6 +3834,18 @@ class S {
     'snooze': 'Tunda',
     'dismiss_calc': 'Untuk menutup, hitung:',
     'dismiss_word': 'Untuk menutup, ketik kata:',
+    'view_list_mode': 'Tampilan daftar',
+    'view_grid_mode': 'Tampilan kisi',
+    'search_reminders_hint': 'Cari pengingat…',
+    'voice_reminder': 'Pengingat suara',
+    'no_results_for': 'Tidak ada hasil untuk',
+    'grp_today': 'Hari ini',
+    'grp_tomorrow': 'Besok',
+    'grp_week': 'Minggu ini',
+    'grp_later': 'Nanti',
+    'grp_stopped': 'Berhenti / selesai',
+    'today_board': 'Papan hari ini',
+    'templates_ready': 'Templat',
   };
 
   static const Map<String, String> _it = {
@@ -4194,6 +4290,18 @@ class S {
     'privacy_disclaimer': 'Privacy e avvertenze',
     'dismiss_calc': 'Per chiudere, calcola:',
     'dismiss_word': 'Per chiudere, scrivi la parola:',
+    'view_list_mode': 'Vista elenco',
+    'view_grid_mode': 'Vista griglia',
+    'search_reminders_hint': 'Cerca promemoria…',
+    'voice_reminder': 'Promemoria vocale',
+    'no_results_for': 'Nessun risultato per',
+    'grp_today': 'Oggi',
+    'grp_tomorrow': 'Domani',
+    'grp_week': 'Questa settimana',
+    'grp_later': 'Più tardi',
+    'grp_stopped': 'Fermato / terminato',
+    'today_board': 'Pannello di oggi',
+    'templates_ready': 'Modelli',
   };
 
   static const Map<String, String> _ms = {
@@ -4638,6 +4746,18 @@ class S {
     'privacy_disclaimer': 'Privasi & Penafian',
     'dismiss_calc': 'Untuk tutup, kira:',
     'dismiss_word': 'Untuk tutup, taip perkataan:',
+    'view_list_mode': 'Paparan senarai',
+    'view_grid_mode': 'Paparan grid',
+    'search_reminders_hint': 'Cari peringatan…',
+    'voice_reminder': 'Peringatan suara',
+    'no_results_for': 'Tiada hasil untuk',
+    'grp_today': 'Hari ini',
+    'grp_tomorrow': 'Esok',
+    'grp_week': 'Minggu ini',
+    'grp_later': 'Kemudian',
+    'grp_stopped': 'Berhenti / tamat',
+    'today_board': 'Papan hari ini',
+    'templates_ready': 'Templat',
   };
 
   static const Map<String, String> _hi = {
@@ -5082,6 +5202,18 @@ class S {
     'privacy_disclaimer': 'गोपनीयता और अस्वीकरण',
     'dismiss_calc': 'बंद करने के लिए हल करें:',
     'dismiss_word': 'बंद करने के लिए शब्द लिखें:',
+    'view_list_mode': 'सूची दृश्य',
+    'view_grid_mode': 'ग्रिड दृश्य',
+    'search_reminders_hint': 'रिमाइंडर खोजें…',
+    'voice_reminder': 'वॉइस रिमाइंडर',
+    'no_results_for': 'कोई परिणाम नहीं',
+    'grp_today': 'आज',
+    'grp_tomorrow': 'कल',
+    'grp_week': 'इस सप्ताह',
+    'grp_later': 'बाद में',
+    'grp_stopped': 'रुका / समाप्त',
+    'today_board': 'आज का बोर्ड',
+    'templates_ready': 'टेम्पलेट',
   };
 
   static const Map<String, String> _bn = {
@@ -5526,6 +5658,18 @@ class S {
     'privacy_disclaimer': 'গোপনীয়তা ও দাবিত্যাগ',
     'dismiss_calc': 'বন্ধ করতে হিসাব করুন:',
     'dismiss_word': 'বন্ধ করতে শব্দটি লিখুন:',
+    'view_list_mode': 'তালিকা ভিউ',
+    'view_grid_mode': 'গ্রিড ভিউ',
+    'search_reminders_hint': 'রিমাইন্ডার খুঁজুন…',
+    'voice_reminder': 'ভয়েস রিমাইন্ডার',
+    'no_results_for': 'কোনো ফলাফল নেই',
+    'grp_today': 'আজ',
+    'grp_tomorrow': 'আগামীকাল',
+    'grp_week': 'এ সপ্তাহ',
+    'grp_later': 'পরে',
+    'grp_stopped': 'বন্ধ / সমাপ্ত',
+    'today_board': 'আজকের বোর্ড',
+    'templates_ready': 'টেমপ্লেট',
   };
 
   static const Map<String, String> _fa = {
@@ -5970,6 +6114,18 @@ class S {
     'privacy_disclaimer': 'حریم خصوصی و سلب مسئولیت',
     'dismiss_calc': 'برای خاموش کردن، حساب کن:',
     'dismiss_word': 'برای خاموش کردن، کلمه را بنویس:',
+    'view_list_mode': 'نمای فهرست',
+    'view_grid_mode': 'نمای شبکه',
+    'search_reminders_hint': 'جستجوی یادآورها…',
+    'voice_reminder': 'یادآور صوتی',
+    'no_results_for': 'نتیجه‌ای نیست برای',
+    'grp_today': 'امروز',
+    'grp_tomorrow': 'فردا',
+    'grp_week': 'این هفته',
+    'grp_later': 'بعداً',
+    'grp_stopped': 'متوقف / پایان‌یافته',
+    'today_board': 'تابلوی امروز',
+    'templates_ready': 'قالب‌ها',
   };
 
   static const Map<String, String> _ru = {
@@ -6414,6 +6570,18 @@ class S {
     'privacy_disclaimer': 'Конфиденциальность и оговорка',
     'dismiss_calc': 'Чтобы выключить, посчитайте:',
     'dismiss_word': 'Чтобы выключить, наберите слово:',
+    'view_list_mode': 'Список',
+    'view_grid_mode': 'Сетка',
+    'search_reminders_hint': 'Поиск напоминаний…',
+    'voice_reminder': 'Голосовое напоминание',
+    'no_results_for': 'Нет результатов для',
+    'grp_today': 'Сегодня',
+    'grp_tomorrow': 'Завтра',
+    'grp_week': 'На этой неделе',
+    'grp_later': 'Позже',
+    'grp_stopped': 'Остановлено / завершено',
+    'today_board': 'Доска на сегодня',
+    'templates_ready': 'Шаблоны',
   };
 }
 

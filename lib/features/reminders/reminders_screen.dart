@@ -95,8 +95,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
               ),
               title: TextField(
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'ابحث في التنبيهات…',
+                decoration: InputDecoration(
+                  hintText: s.t('search_reminders_hint'),
                   border: InputBorder.none,
                 ),
                 onChanged: (v) => setState(() => _query = v),
@@ -112,12 +112,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
           : gradientAppBar(context, s.t('reminders'), actions: [
               IconButton(
                 icon: Icon(_gridView ? Icons.view_agenda_outlined : Icons.grid_view),
-                tooltip: _gridView ? 'عرض قائمة' : 'عرض مربّعات',
+                tooltip: _gridView ? s.t('view_list_mode') : s.t('view_grid_mode'),
                 onPressed: _toggleView,
               ),
               IconButton(
                 icon: const Icon(Icons.search),
-                tooltip: 'بحث',
+                tooltip: s.t('search'),
                 onPressed: () => setState(() => _searching = true),
               ),
               IconButton(
@@ -133,7 +133,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
         children: [
           FloatingActionButton.small(
             heroTag: 'voice_fab',
-            tooltip: 'تنبيه بالصوت',
+            tooltip: s.t('voice_reminder'),
             onPressed: () => createReminderByVoice(context),
             child: const Icon(Icons.mic),
           ),
@@ -142,7 +142,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
             heroTag: 'add_fab',
             onPressed: () => showStandaloneReminderDialog(context),
             icon: const Icon(Icons.add_alarm),
-            label: const Text('تنبيه جديد'),
+            label: Text(s.t('rd_new')),
           ),
         ],
       ),
@@ -178,7 +178,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
             Icon(Icons.search_off,
                 size: 56, color: Theme.of(context).colorScheme.outline),
             const SizedBox(height: 12),
-            Text('لا نتائج لـ «$q»',
+            Text('${S.of(context).t('no_results_for')} «$q»',
                 style: Theme.of(context).textTheme.titleMedium),
           ],
         ),
@@ -322,14 +322,14 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     () => go(const HelpGuideScreen())),
                 const SizedBox(height: 8),
                 _drawerLabel(context, s.t('reminder_tools')),
-                _drawerTile(context, Icons.dashboard_outlined, 'لوحة اليوم',
-                    () => go(const TodayDashboardScreen())),
+                _drawerTile(context, Icons.dashboard_outlined,
+                    s.t('today_board'), () => go(const TodayDashboardScreen())),
                 _drawerTile(context, Icons.dashboard_customize_outlined,
-                    'قوالب جاهزة', () {
+                    s.t('templates_ready'), () {
                   Navigator.pop(context);
                   showReminderTemplates(context);
                 }),
-                _drawerTile(context, Icons.bar_chart, 'الإحصاءات',
+                _drawerTile(context, Icons.bar_chart, s.t('stats'),
                     () => go(const ReminderStatsScreen())),
                 _drawerTile(context, Icons.medication_outlined, s.t('med_mode'),
                     () => go(const MedicationScreen())),
@@ -541,12 +541,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
         groups['later']!.add(v);
       }
     }
-    const titles = {
-      'today': '📅 اليوم',
-      'tomorrow': '🌅 غدًا',
-      'week': '🗓️ هذا الأسبوع',
-      'later': '⏳ لاحقًا',
-      'stopped': '🔕 متوقّف / منتهٍ',
+    final titles = {
+      'today': '📅 ${s.t('grp_today')}',
+      'tomorrow': '🌅 ${s.t('grp_tomorrow')}',
+      'week': '🗓️ ${s.t('grp_week')}',
+      'later': '⏳ ${s.t('grp_later')}',
+      'stopped': '🔕 ${s.t('grp_stopped')}',
     };
     // لون مميّز لكل مجال زمنيّ.
     const colors = {
