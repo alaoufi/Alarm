@@ -216,6 +216,10 @@ class NotificationService {
       category: AndroidNotificationCategory.alarm,
       // شاشة كاملة للتذكيرات الحرجة و«لا يُفوَّت».
       fullScreenIntent: insistent,
+      // ثابت لا يُزال بالسحب من لوحة الإشعارات، ولا يُمسح بالنقر — يبقى الصوت
+      // حتى يُكمل المستخدم التحدّي (سدّ ثغرة «السحب من الأعلى لإيقافه»).
+      ongoing: insistent,
+      autoCancel: !insistent,
       playSound: true,
       sound: isCustom
           ? UriAndroidNotificationSound(_customUri!)
@@ -224,8 +228,9 @@ class NotificationService {
       enableVibration: vibrate,
       vibrationPattern:
           vibrate ? Int64List.fromList([0, 600, 300, 600, 300, 600]) : null,
-      // FLAG_INSISTENT (تكرار الصوت حتى التفاعل) للحرجة و«لا يُفوَّت».
-      additionalFlags: insistent ? Int32List.fromList([4]) : null,
+      // FLAG_INSISTENT (4، تكرار الصوت) + FLAG_NO_CLEAR (32، يمنع «مسح الكل»)
+      // للحرجة و«لا يُفوَّت» — فلا يُسكَت إلا بإكمال التحدّي.
+      additionalFlags: insistent ? Int32List.fromList([4, 32]) : null,
       actions: [
         // مع «لا يُفوَّت» لا غفوة ولا إيقاف من الإشعار — الحلّ الوحيد فتح
         // المنبّه وإكمال التحدّي.
