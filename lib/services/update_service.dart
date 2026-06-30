@@ -173,7 +173,7 @@ class UpdateService {
       if (res.statusCode != 200) throw HttpException('HTTP ${res.statusCode}');
       final total = res.contentLength;
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/AlaoufiNotes_update.apk');
+      final file = File('${dir.path}/Alerts_update.apk');
       final sink = file.openWrite();
       var received = 0;
       await for (final chunk in res) {

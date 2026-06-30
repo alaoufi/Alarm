@@ -39,7 +39,7 @@ class _AppLockGateState extends State<AppLockGate> {
     // محاولة البصمة تلقائيًا مرة واحدة إن كانت مفعّلة.
     if (await SecurityService.instance.isBiometricEnabled()) {
       final ok = await SecurityService.instance
-          .authenticateBiometric('افتح قفل Alaoufi Notes');
+          .authenticateBiometric('افتح قفل Alerts');
       if (ok && mounted) setState(() => _locked = false);
     }
   }
@@ -62,7 +62,7 @@ class _AppLockGateState extends State<AppLockGate> {
             },
             onBiometric: () async {
               final ok = await SecurityService.instance
-                  .authenticateBiometric('افتح قفل Alaoufi Notes');
+                  .authenticateBiometric('افتح قفل Alerts');
               if (ok && mounted) setState(() => _locked = false);
               return ok;
             },

@@ -438,7 +438,7 @@ class BackupService {
               .where((r) => r.isStandalone)
               .toList();
       final data = <String, dynamic>{
-        'app': 'AlaoufiNotes',
+        'app': 'Alerts',
         'type': 'notes-json',
         'version': 1,
         'exportedAt': DateTime.now().toIso8601String(),
@@ -453,7 +453,7 @@ class BackupService {
       final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
       final bytes = Uint8List.fromList(utf8.encode(jsonStr));
       final stamp = DateFormat('yyyy-MM-dd_HHmm').format(DateTime.now());
-      final fileName = 'AlaoufiNotes_$stamp.json';
+      final fileName = 'Alerts_$stamp.json';
       final saved = await FilePicker.platform.saveFile(
         dialogTitle: 'حفظ ملف JSON',
         fileName: fileName,
@@ -539,7 +539,7 @@ class BackupService {
 
       await SharePlus.instance.share(ShareParams(
         files: [XFile(tmpPath, mimeType: 'application/octet-stream')],
-        text: 'نسخة Alaoufi Notes الاحتياطية المشفّرة',
+        text: 'نسخة Alerts الاحتياطية المشفّرة',
         subject: fileName,
       ));
       await _stamp(_kLastShare);

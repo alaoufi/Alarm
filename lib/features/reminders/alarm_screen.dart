@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +28,9 @@ class _AlarmScreenState extends State<AlarmScreen> {
   bool _raised = false;
   Timer? _escalateTimer; // تصعيد متعدّد المراحل إن لم يتفاعل المستخدم.
   int _stage = 0;
+  // مشغّل داخليّ يكرّر صوت المنبّه ما دامت الشاشة ظاهرة — ضمانٌ أن الصوت
+  // يستمرّ حتى إكمال التحدّي/التأجيل، حتى لو أوقف النظام صوت الإشعار.
+  final AudioPlayer _player = AudioPlayer();
 
   int get _base => int.tryParse(widget.info['base'] ?? '') ?? 0;
   int? get _noteId {
@@ -46,6 +50,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
         rampSeconds: settings.gradualVolume ? 15 : 0,
       );
     }
+    _startLoopingSound(settings);
     // تصعيد متعدّد المراحل: كل 12 ثانية بلا تفاعل يزيد الإلحاح (صوت أقصى +
     // اهتزاز متصاعد) — للمنبّهات الحرجة التي يجب ألّا تُفوَّت.
     _escalateTimer = Timer.periodic(const Duration(seconds: 12), (_) {
@@ -60,9 +65,30 @@ class _AlarmScreenState extends State<AlarmScreen> {
     });
   }
 
+  /// يبدأ تكرار نغمة المنبّه المختارة بأقصى صوت داخل التطبيق.
+  Future<void> _startLoopingSound(SettingsProvider settings) async {
+    try {
+      final tone = settings.alarmTone;
+      // النغمة المخصّصة (URI الجهاز) لا تُشغَّل كأصل؛ نستخدم نغمة إنذار مضمونة.
+      final asset = (tone == 'custom' || tone.isEmpty) ? 'alarm' : tone;
+      await _player.setReleaseMode(ReleaseMode.loop);
+      await _player.setVolume(1.0);
+      await _player.play(AssetSource('sounds/$asset.wav'), volume: 1.0);
+    } catch (_) {
+      // عند أيّ خطأ يبقى صوت الإشعار هو الاحتياط.
+    }
+  }
+
+  Future<void> _stopSound() async {
+    try {
+      await _player.stop();
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
     _escalateTimer?.cancel();
+    _player.dispose(); // إيقاف الصوت الداخليّ عند إغلاق الشاشة بأيّ طريقة.
     // نستعيد مستوى الصوت الأصليّ مهما كانت طريقة الإغلاق (إنجاز/تأجيل/رجوع).
     if (_raised) AlarmVolume.restore();
     super.dispose();
@@ -179,6 +205,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
                   ),
                   onPressed: () async {
                     if (!await _confirmDismiss()) return;
+                    await _stopSound();
                     await NotificationService.instance.acknowledgeAlarm(_base);
                     if (context.mounted) Navigator.pop(context);
                   },

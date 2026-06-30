@@ -288,7 +288,7 @@ class NotificationService {
 
     final safeTitle = title.trim().isEmpty ? '⏰ تذكير' : '⏰ ${title.trim()}';
     final safeBody =
-        body.trim().isEmpty ? 'لديك تذكير من Alaoufi Notes' : body.trim();
+        body.trim().isEmpty ? 'لديك تذكير من Alerts' : body.trim();
 
     // كورس دواء (فاصل أيام مخصّص أو عدد جرعات محدّد): لا يوجد تكرار «كل N يوم» أو
     // «أوقف بعد N» أصليّ في الإضافة ⇒ نجدول مجموعة من المواعيد القادمة يدويًّا،

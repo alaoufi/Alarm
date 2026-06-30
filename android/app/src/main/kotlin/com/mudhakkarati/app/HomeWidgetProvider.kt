@@ -17,7 +17,7 @@ class HomeWidgetProvider : HomeWidgetProvider() {
     ) {
         for (widgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.home_widget_layout).apply {
-                val title = widgetData.getString("widget_title", "Alaoufi Notes") ?: "Alaoufi Notes"
+                val title = widgetData.getString("widget_title", "Alerts") ?: "Alerts"
                 val note = widgetData.getString("widget_note", "لا توجد ملاحظات بعد")
                     ?: "لا توجد ملاحظات بعد"
 
