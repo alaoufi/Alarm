@@ -75,8 +75,12 @@ class _AlarmScreenState extends State<AlarmScreen> {
     final now = TimeOfDay.now();
     final date = DateTime.now();
     String two(int n) => n.toString().padLeft(2, '0');
+    // وضع «لا يُفوَّت»: لا خروج إلا بإكمال التحدّي أو التأجيل (لا رجوع).
+    final cantMiss = context.watch<SettingsProvider>().dismissChallenge != 0;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !cantMiss,
+      child: Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -90,13 +94,29 @@ class _AlarmScreenState extends State<AlarmScreen> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                // سهم رجوع: يُغلق شاشة المنبّه دون إنجاز/تأجيل (يبقى التذكير).
+                // مع «لا يُفوَّت»: لا زرّ رجوع — الخروج فقط بإكمال التحدّي أو
+                // التأجيل. بدونه: سهم رجوع يُغلق الشاشة (يبقى التذكير).
                 Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: BackButton(
-                    color: Colors.white,
-                    onPressed: () => Navigator.maybePop(context),
-                  ),
+                  child: cantMiss
+                      ? Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.lock_clock,
+                                  color: Colors.white70, size: 18),
+                              const SizedBox(width: 6),
+                              Text(s.t('cant_miss_locked'),
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 12.5)),
+                            ],
+                          ),
+                        )
+                      : BackButton(
+                          color: Colors.white,
+                          onPressed: () => Navigator.maybePop(context),
+                        ),
                 ),
                 Icon(Icons.crisis_alert,
                     color: Colors.white, size: 56.0 + _stage * 4),
@@ -171,6 +191,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 

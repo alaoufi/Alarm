@@ -534,6 +534,7 @@ class S {
     'grp_stopped': 'متوقّف / منتهٍ',
     'today_board': 'لوحة اليوم',
     'templates_ready': 'قوالب جاهزة',
+    'cant_miss_locked': 'أكمِل التحدّي لإيقاف المنبّه',
   };
 
   static const Map<String, String> _en = {
@@ -1010,6 +1011,7 @@ class S {
     'grp_stopped': 'Stopped / ended',
     'today_board': 'Today board',
     'templates_ready': 'Templates',
+    'cant_miss_locked': 'Complete the challenge to stop',
   };
 
   static const Map<String, String> _tr = {
@@ -1486,6 +1488,7 @@ class S {
     'grp_stopped': 'Durduruldu / bitti',
     'today_board': 'Bugün panosu',
     'templates_ready': 'Şablonlar',
+    'cant_miss_locked': 'Durdurmak için görevi tamamla',
   };
 
   static const Map<String, String> _es = {
@@ -1962,6 +1965,7 @@ class S {
     'grp_stopped': 'Detenido / finalizado',
     'today_board': 'Panel de hoy',
     'templates_ready': 'Plantillas',
+    'cant_miss_locked': 'Completa el reto para detener',
   };
 
   static const Map<String, String> _de = {
@@ -2438,6 +2442,7 @@ class S {
     'grp_stopped': 'Gestoppt / beendet',
     'today_board': 'Heute-Übersicht',
     'templates_ready': 'Vorlagen',
+    'cant_miss_locked': 'Aufgabe lösen zum Stoppen',
   };
 
   static const Map<String, String> _fil = {
@@ -2894,6 +2899,7 @@ class S {
     'grp_stopped': 'Tigil / tapos',
     'today_board': 'Board ngayon',
     'templates_ready': 'Mga template',
+    'cant_miss_locked': 'Tapusin ang hamon para ihinto',
   };
 
   static const Map<String, String> _fr = {
@@ -3370,6 +3376,7 @@ class S {
     'grp_stopped': 'Arrêté / terminé',
     'today_board': 'Tableau du jour',
     'templates_ready': 'Modèles',
+    'cant_miss_locked': 'Termine le défi pour arrêter',
   };
 
   static const Map<String, String> _id = {
@@ -3846,6 +3853,7 @@ class S {
     'grp_stopped': 'Berhenti / selesai',
     'today_board': 'Papan hari ini',
     'templates_ready': 'Templat',
+    'cant_miss_locked': 'Selesaikan tantangan untuk berhenti',
   };
 
   static const Map<String, String> _it = {
@@ -4302,6 +4310,7 @@ class S {
     'grp_stopped': 'Fermato / terminato',
     'today_board': 'Pannello di oggi',
     'templates_ready': 'Modelli',
+    'cant_miss_locked': 'Completa la sfida per fermare',
   };
 
   static const Map<String, String> _ms = {
@@ -4758,6 +4767,7 @@ class S {
     'grp_stopped': 'Berhenti / tamat',
     'today_board': 'Papan hari ini',
     'templates_ready': 'Templat',
+    'cant_miss_locked': 'Selesaikan cabaran untuk berhenti',
   };
 
   static const Map<String, String> _hi = {
@@ -5214,6 +5224,7 @@ class S {
     'grp_stopped': 'रुका / समाप्त',
     'today_board': 'आज का बोर्ड',
     'templates_ready': 'टेम्पलेट',
+    'cant_miss_locked': 'रोकने के लिए चुनौती पूरी करें',
   };
 
   static const Map<String, String> _bn = {
@@ -5670,6 +5681,7 @@ class S {
     'grp_stopped': 'বন্ধ / সমাপ্ত',
     'today_board': 'আজকের বোর্ড',
     'templates_ready': 'টেমপ্লেট',
+    'cant_miss_locked': 'থামাতে চ্যালেঞ্জ সম্পূর্ণ করুন',
   };
 
   static const Map<String, String> _fa = {
@@ -6126,6 +6138,7 @@ class S {
     'grp_stopped': 'متوقف / پایان‌یافته',
     'today_board': 'تابلوی امروز',
     'templates_ready': 'قالب‌ها',
+    'cant_miss_locked': 'برای توقف، چالش را کامل کن',
   };
 
   static const Map<String, String> _ru = {
@@ -6582,6 +6595,7 @@ class S {
     'grp_stopped': 'Остановлено / завершено',
     'today_board': 'Доска на сегодня',
     'templates_ready': 'Шаблоны',
+    'cant_miss_locked': 'Решите задание, чтобы остановить',
   };
 }
 
