@@ -203,7 +203,10 @@ class NotificationService {
     }
     final isCustom = _tone == 'custom' && _customUri != null;
     final critical = imp == ReminderImportance.critical;
-    final vibrate = imp == ReminderImportance.high || critical;
+    // «لا يُفوَّت» يجعل التنبيه مُلِحًّا كالحرج: صوت متكرّر (INSISTENT) وشاشة
+    // كاملة، فيستمرّ الصوت حتى يُكمل المستخدم التحدّي ويُوقفه.
+    final insistent = critical || cantMiss;
+    final vibrate = imp == ReminderImportance.high || insistent;
     return AndroidNotificationDetails(
       isCustom ? _customChannelId : 'alaoufi_alarm_$_tone',
       isCustom ? 'المنبّه (نغمة مخصّصة)' : 'المنبّه ($_tone)',
@@ -211,8 +214,8 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
-      // شاشة كاملة للتذكيرات الحرجة فقط.
-      fullScreenIntent: critical,
+      // شاشة كاملة للتذكيرات الحرجة و«لا يُفوَّت».
+      fullScreenIntent: insistent,
       playSound: true,
       sound: isCustom
           ? UriAndroidNotificationSound(_customUri!)
@@ -221,8 +224,8 @@ class NotificationService {
       enableVibration: vibrate,
       vibrationPattern:
           vibrate ? Int64List.fromList([0, 600, 300, 600, 300, 600]) : null,
-      // FLAG_INSISTENT (تكرار الصوت حتى التفاعل) للحرجة فقط.
-      additionalFlags: critical ? Int32List.fromList([4]) : null,
+      // FLAG_INSISTENT (تكرار الصوت حتى التفاعل) للحرجة و«لا يُفوَّت».
+      additionalFlags: insistent ? Int32List.fromList([4]) : null,
       actions: [
         if (snoozeMinutes > 0)
           AndroidNotificationAction(_snoozeAction, 'غفوة',

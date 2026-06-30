@@ -176,7 +176,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
 
   /// كلمات بسيطة لتحدّي «اكتب الكلمة» — بلغة التطبيق المختارة (تُنسَخ كما هي).
   static const Map<String, List<String>> _dismissWords = {
-    'ar': ['تنبيه', 'استيقظ', 'جاهز', 'حاضر', 'صباح', 'تذكير'],
+    'ar': ['صحيت', 'قمت', 'واعي', 'ابشر', 'خلاص', 'فهمت', 'هالحين'],
     'en': ['alert', 'awake', 'ready', 'done', 'morning', 'wake'],
     'es': ['alerta', 'listo', 'hecho', 'aviso', 'hora', 'dia'],
     'de': ['wecker', 'wach', 'bereit', 'fertig', 'morgen', 'alarm'],
