@@ -5,6 +5,7 @@ import '../../core/l10n/app_strings.dart';
 import '../../services/notification_service.dart';
 import '../settings/settings_provider.dart';
 import '../sounds/sound_library_screen.dart';
+import 'dismiss_challenge_prompt.dart';
 import 'reminder_helpers.dart';
 import 'reminders_provider.dart';
 
@@ -144,7 +145,7 @@ class ReminderDefaultsScreen extends StatelessWidget {
                     ],
                     selected: {st.dismissChallenge},
                     onSelectionChanged: (v) =>
-                        st.setDismissChallenge(v.first),
+                        selectDismissChallenge(context, st, v.first),
                   ),
                 ],
               ),

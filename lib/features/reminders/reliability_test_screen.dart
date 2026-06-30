@@ -6,6 +6,7 @@ import '../../services/alarm_volume.dart';
 import '../../services/notification_service.dart';
 import '../settings/settings_provider.dart';
 import 'alarm_permissions.dart';
+import 'dismiss_challenge_prompt.dart';
 
 /// شاشة «اختبار الموثوقية»: تتأكّد من أن الإشعارات والمنبّه يعملان فعليًّا على
 /// الجهاز — إشعار فوري + منبّه حرج مجدول + تشخيص أذونات (إشعارات/منبّه دقيق).
@@ -274,7 +275,7 @@ class _ReliabilityTestScreenState extends State<ReliabilityTestScreen> {
                     ],
                     selected: {settings.dismissChallenge},
                     onSelectionChanged: (v) =>
-                        settings.setDismissChallenge(v.first),
+                        selectDismissChallenge(context, settings, v.first),
                   ),
                 ],
               ),

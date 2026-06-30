@@ -11,6 +11,7 @@ import '../../services/update_service.dart';
 import '../backup/backup_screen.dart';
 import '../backup/daily_backup_switch.dart';
 import '../help/help_guide_screen.dart';
+import '../reminders/dismiss_challenge_prompt.dart';
 import '../reminders/reminder_defaults_screen.dart';
 import '../reminders/reliability_test_screen.dart';
 import '../security/security_settings_screen.dart';
@@ -383,7 +384,8 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icon(Icons.keyboard_outlined, size: 16)),
             ],
             selected: {st.dismissChallenge},
-            onSelectionChanged: (v) => st.setDismissChallenge(v.first),
+            onSelectionChanged: (v) =>
+                selectDismissChallenge(context, st, v.first),
           ),
         ),
       ),
