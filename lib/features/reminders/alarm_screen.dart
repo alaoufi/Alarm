@@ -182,18 +182,20 @@ class _AlarmScreenState extends State<AlarmScreen> {
                           color: Colors.white.withOpacity(0.9), fontSize: 16)),
                 ],
                 const Spacer(),
-                // تأجيل.
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white70),
-                    minimumSize: const Size.fromHeight(52),
+                // تأجيل/غفوة — يُخفى في وضع «لا يُفوَّت»: الحلّ الوحيد إكمال التحدّي.
+                if (!cantMiss) ...[
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white70),
+                      minimumSize: const Size.fromHeight(52),
+                    ),
+                    onPressed: () => _snooze(context, s),
+                    icon: const Icon(Icons.snooze),
+                    label: Text(s.t('alarm_snooze')),
                   ),
-                  onPressed: () => _snooze(context, s),
-                  icon: const Icon(Icons.snooze),
-                  label: Text(s.t('alarm_snooze')),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                ],
                 // تم الإنجاز.
                 FilledButton.icon(
                   style: FilledButton.styleFrom(

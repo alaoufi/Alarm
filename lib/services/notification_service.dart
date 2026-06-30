@@ -227,7 +227,9 @@ class NotificationService {
       // FLAG_INSISTENT (تكرار الصوت حتى التفاعل) للحرجة و«لا يُفوَّت».
       additionalFlags: insistent ? Int32List.fromList([4]) : null,
       actions: [
-        if (snoozeMinutes > 0)
+        // مع «لا يُفوَّت» لا غفوة ولا إيقاف من الإشعار — الحلّ الوحيد فتح
+        // المنبّه وإكمال التحدّي.
+        if (snoozeMinutes > 0 && !cantMiss)
           AndroidNotificationAction(_snoozeAction, 'غفوة',
               showsUserInterface: false, cancelNotification: true),
         // مع «لا يُفوَّت» نُخفي زرّ الإيقاف المباشر: يجب فتح المنبّه وإكمال
