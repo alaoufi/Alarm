@@ -499,6 +499,28 @@ class NotificationService {
     await _cancelFollowups(base);
   }
 
+  /// إسكات صوت إشعار المنبّه مع إبقائه ظاهرًا (ثابتًا غير قابل للإزالة) — تُستدعى
+  /// فور ظهور شاشة المنبّه ليبقى مصدر صوت واحد (صوت الشاشة الداخليّ) بلا تكرار/صدى.
+  Future<void> silenceAlarm(int base, String title, String body,
+      {bool sticky = false}) async {
+    await init();
+    final android = AndroidNotificationDetails(
+      'alaoufi_alarm_active', 'المنبّه (نشط)',
+      channelDescription: 'إشعار المنبّه أثناء عرض شاشته',
+      importance: Importance.max,
+      priority: Priority.max,
+      category: AndroidNotificationCategory.alarm,
+      playSound: false,
+      enableVibration: false,
+      // مع «لا يُفوَّت» يبقى ثابتًا غير قابل للإزالة؛ وإلا قابل للإزالة عاديًّا.
+      ongoing: sticky,
+      autoCancel: !sticky,
+      additionalFlags: sticky ? Int32List.fromList([32]) : null,
+    );
+    await _plugin.show(base, title, body.trim().isEmpty ? null : body,
+        NotificationDetails(android: android), payload: 'base:$base');
+  }
+
   /// تأجيل المنبّه [minutes] دقيقة (يُلغي الإعادات ثم يُعيد جدولته حرجًا).
   Future<void> snoozeAlarm(
       int base, String title, String body, int minutes, int? noteId) async {

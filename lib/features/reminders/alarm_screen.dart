@@ -65,7 +65,8 @@ class _AlarmScreenState extends State<AlarmScreen> {
     });
   }
 
-  /// يبدأ تكرار نغمة المنبّه المختارة بأقصى صوت داخل التطبيق.
+  /// يبدأ تكرار نغمة المنبّه المختارة بأقصى صوت داخل التطبيق، ثم يُسكِت صوت
+  /// الإشعار ليبقى مصدر صوت واحد بلا تكرار/صدى.
   Future<void> _startLoopingSound(SettingsProvider settings) async {
     try {
       final tone = settings.alarmTone;
@@ -74,6 +75,11 @@ class _AlarmScreenState extends State<AlarmScreen> {
       await _player.setReleaseMode(ReleaseMode.loop);
       await _player.setVolume(1.0);
       await _player.play(AssetSource('sounds/$asset.wav'), volume: 1.0);
+      // صوت الشاشة يعمل ⇒ أسكِت صوت الإشعار (مصدر واحد بلا صدى). يبقى ثابتًا
+      // غير قابل للإزالة في وضع «لا يُفوَّت».
+      await NotificationService.instance.silenceAlarm(
+          _base, widget.info['title'] ?? '⏰', widget.info['body'] ?? '',
+          sticky: settings.dismissChallenge != 0);
     } catch (_) {
       // عند أيّ خطأ يبقى صوت الإشعار هو الاحتياط.
     }
