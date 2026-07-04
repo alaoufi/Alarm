@@ -11,6 +11,9 @@ import '../data/models/reminder.dart';
 /// زمن الجرعة رقم [index] (يبدأ من 0) منذ بداية المنبّه.
 DateTime medOccurrenceAt(Reminder r, int index) {
   final base = r.time;
+  if (r.intervalHours > 0) {
+    return base.add(Duration(hours: index * r.intervalHours));
+  }
   if (r.intervalDays >= 2) {
     return base.add(Duration(days: index * r.intervalDays));
   }
@@ -36,45 +39,51 @@ DateTime medOccurrenceAt(Reminder r, int index) {
 /// جرعات الكورس إن كان محدّدًا. محدودة بسقف أمان لتفادي أي حلقة طويلة.
 List<DateTime> medOccurrencesBetween(
     Reminder r, DateTime after, DateTime until) {
-  // قصّ النهاية على آخر جرعة في كورس محدود العدد.
+  // قصّ النهاية على آخر جرعة في كورس محدود (بعدد الجرعات أو بعدد الأيام).
   var end = until;
   if (r.doseCount > 0) {
     final last = medOccurrenceAt(r, r.doseCount - 1);
     if (last.isBefore(end)) end = last;
+  }
+  if (r.courseDays > 0) {
+    final courseEnd = r.time.add(Duration(days: r.courseDays));
+    if (courseEnd.isBefore(end)) end = courseEnd;
   }
   if (after.isAfter(end)) return const [];
 
   final res = <DateTime>[];
   final base = r.time;
 
-  // مرّة واحدة (بلا فاصل أيام).
-  if (r.intervalDays < 2 && r.repeat == ReminderRepeat.once) {
-    if (base.isAfter(after) && !base.isAfter(end)) res.add(base);
-    return res;
-  }
-
-  // خطوة بالأيام (فاصل مخصّص / يومي / أسبوعي) — قفزة سريعة لأول موعد بعد after.
-  final stepDays = r.intervalDays >= 2
-      ? r.intervalDays
-      : r.repeat == ReminderRepeat.daily
-          ? 1
-          : r.repeat == ReminderRepeat.weekly
-              ? 7
-              : 0;
-  if (stepDays > 0) {
+  // خطوة ثابتة: بالساعات («كل N ساعة») أو بالأيام (فاصل مخصّص/يومي/أسبوعي).
+  final Duration? step = r.intervalHours > 0
+      ? Duration(hours: r.intervalHours)
+      : r.intervalDays >= 2
+          ? Duration(days: r.intervalDays)
+          : r.repeat == ReminderRepeat.daily
+              ? const Duration(days: 1)
+              : r.repeat == ReminderRepeat.weekly
+                  ? const Duration(days: 7)
+                  : null;
+  if (step != null) {
     var i = 0;
-    final gap = after.difference(base).inDays;
-    if (gap > 0) i = gap ~/ stepDays;
-    var t = base.add(Duration(days: i * stepDays));
+    final gapMin = after.difference(base).inMinutes;
+    if (gapMin > 0) i = gapMin ~/ step.inMinutes;
+    var t = base.add(step * i);
     while (!t.isAfter(after)) {
       i++;
-      t = base.add(Duration(days: i * stepDays));
+      t = base.add(step * i);
     }
     while (!t.isAfter(end) && res.length < 500) {
       res.add(t);
       i++;
-      t = base.add(Duration(days: i * stepDays));
+      t = base.add(step * i);
     }
+    return res;
+  }
+
+  // مرّة واحدة.
+  if (r.repeat == ReminderRepeat.once) {
+    if (base.isAfter(after) && !base.isAfter(end)) res.add(base);
     return res;
   }
 

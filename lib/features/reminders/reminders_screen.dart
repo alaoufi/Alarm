@@ -648,7 +648,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
     final label = _labelOf(v);
     // وصف التكرار (مع اليوم عند الأسبوعي، وفاصل/مدّة الدواء إن وُجدت).
     String repeatInfo;
-    if (r.intervalDays >= 2) {
+    if (r.intervalHours > 0) {
+      repeatInfo = 'كل ${r.intervalHours} ساعة';
+    } else if (r.intervalDays >= 2) {
       repeatInfo = 'كل ${r.intervalDays} يوم';
     } else if (r.repeat == ReminderRepeat.weekly) {
       repeatInfo = '${_repeatLabel(s, r.repeat)} • ${_weekdayAr[r.time.weekday]}';
@@ -790,7 +792,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
     final timeStr = DateFormat('h:mm a', 'ar').format(r.time);
     final label = _labelOf(v);
     String repeatInfo;
-    if (r.intervalDays >= 2) {
+    if (r.intervalHours > 0) {
+      repeatInfo = 'كل ${r.intervalHours} ساعة';
+    } else if (r.intervalDays >= 2) {
       repeatInfo = 'كل ${r.intervalDays} يوم';
     } else if (r.repeat == ReminderRepeat.weekly) {
       repeatInfo = '${_repeatLabel(s, r.repeat)} • ${_weekdayAr[r.time.weekday]}';
@@ -1099,8 +1103,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
   DateTime _nextFire(Reminder r) {
     final now = DateTime.now();
     final t = r.time;
-    // كورس دواء (فاصل أيام/عدد جرعات): أوّل موعد قادم، أو لا شيء إن انتهى.
-    if (r.intervalDays >= 2 || r.doseCount > 0) {
+    // كورس دواء (فاصل أيام/ساعات أو عدد جرعات/أيام): أوّل موعد قادم.
+    if (r.intervalDays >= 2 ||
+        r.intervalHours > 0 ||
+        r.doseCount > 0 ||
+        r.courseDays > 0) {
       final next =
           medOccurrencesBetween(r, now, now.add(const Duration(days: 3650)));
       return next.isEmpty ? DateTime(9999) : next.first;

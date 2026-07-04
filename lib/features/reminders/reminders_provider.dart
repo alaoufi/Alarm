@@ -81,7 +81,9 @@ class RemindersProvider extends ChangeNotifier {
     String location = '',
     String attachmentPath = '',
     int intervalDays = 0,
+    int intervalHours = 0,
     int doseCount = 0,
+    int courseDays = 0,
     int? color,
     Reminder? existing,
   }) async {
@@ -100,7 +102,9 @@ class RemindersProvider extends ChangeNotifier {
       attachmentPath: attachmentPath,
       notificationId: notifId,
       intervalDays: intervalDays,
+      intervalHours: intervalHours,
       doseCount: doseCount,
+      courseDays: courseDays,
       color: color,
     );
     final id = await _repo.insert(reminder);
@@ -284,7 +288,9 @@ class RemindersProvider extends ChangeNotifier {
       attachmentPath: '',
       notificationId: notifId,
       intervalDays: r.intervalDays,
+      intervalHours: r.intervalHours,
       doseCount: r.doseCount,
+      courseDays: r.courseDays,
       color: r.color,
     );
     final id = await _repo.insert(copy);
@@ -331,7 +337,9 @@ class RemindersProvider extends ChangeNotifier {
         attachmentPath: r.attachmentPath,
         notificationId: r.notificationId,
         intervalDays: r.intervalDays,
+        intervalHours: r.intervalHours,
         doseCount: r.doseCount,
+        courseDays: r.courseDays,
         color: r.color,
       );
       await _repo.update(detached);

@@ -221,7 +221,9 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
   // عند تعديل تنبيه له موقع محفوظ، نبدأ بنوع «موعد» لإظهار حقول المكان.
   final bool existingIsMed = existing != null &&
       (existing.intervalDays >= 2 ||
+          existing.intervalHours > 0 ||
           existing.doseCount > 0 ||
+          existing.courseDays > 0 ||
           (existing.title?.contains('💊') ?? false));
   final String _t0 = existing?.title ?? '';
   ReminderKind kind = existingIsMed
@@ -269,9 +271,25 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
     }
   }
   final doseCtrl = TextEditingController();
-  // دواء: فاصل الأيام بين الجرعات (≥2 ⇒ «كل N يوم») + عدد جرعات الكورس (0 = مستمر).
-  int intervalDays = existing?.intervalDays ?? 0;
-  int doseCount = existing?.doseCount ?? 0;
+  // دواء: فاصل الجرعات (أيام «كل N يوم» أو ساعات «كل N ساعة») + مدّة الكورس
+  // (عدد جرعات أو عدد أيام). 0 = بلا حدّ.
+  // وحدة الفاصل المعروضة: ساعات إن وُجد فاصل ساعات، وإلا أيام.
+  bool intervalInHours = (existing?.intervalHours ?? 0) > 0;
+  // قيم المُحدِّدات المعروضة (≥1؛ 0 لا فاعلية له).
+  int daysEvery = (existing != null && existing.intervalDays >= 2)
+      ? existing.intervalDays
+      : 1;
+  int hoursEvery =
+      (existing?.intervalHours ?? 0) > 0 ? existing!.intervalHours : 6;
+  // نوع مدّة الكورس: 0 مستمر · 1 عدد جرعات · 2 عدد أيام.
+  int courseMode = (existing?.doseCount ?? 0) > 0
+      ? 1
+      : (existing?.courseDays ?? 0) > 0
+          ? 2
+          : 0;
+  int doseValue = (existing?.doseCount ?? 0) > 0 ? existing!.doseCount : 30;
+  int courseDaysValue =
+      (existing?.courseDays ?? 0) > 0 ? existing!.courseDays : 5;
   final placeCtrl = TextEditingController();
   final mapLinkCtrl = TextEditingController(text: existing?.location ?? '');
   // مرفق الدعوة (صورة/PDF) للموعد — اختياري.
@@ -322,11 +340,6 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
 
           // إعدادات افتراضية ذكية عند اختيار نوع المنبّه.
           void applyKindDefaults(ReminderKind k) {
-            // فاصل الأيام/عدد الجرعات خاصّان بالدواء فقط.
-            if (k != ReminderKind.medication) {
-              intervalDays = 0;
-              doseCount = 0;
-            }
             switch (k) {
               case ReminderKind.general:
                 break;
@@ -500,8 +513,7 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
           }
           // التاريخ غير مهمّ عند التكرار اليومي/الأسبوعي (يتكرّر بنفسه)، لكنه مهمّ
           // لكورس الدواء (يحدّد بداية العلاج).
-          final medCourse = kind == ReminderKind.medication &&
-              (intervalDays >= 2 || doseCount > 0);
+          final medCourse = kind == ReminderKind.medication;
           final showDate = medCourse ||
               (repeat != ReminderRepeat.weekly &&
                   repeat != ReminderRepeat.daily);
@@ -948,98 +960,134 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                               ),
                             ],
                           ],
-                          // خيارات خاصّة بالدواء: فاصل الجرعات (أيام الراحة) + مدّة العلاج.
-                          // «كل عدد أيام» يظهر للدواء فقط؛ ويُحسب كأيام راحة:
-                          // 0 = يوميًّا · 1 = يوم بعد يوم · 2 = جرعة ثم يومان راحة …
+                          // خيارات خاصّة بالدواء: فاصل الجرعات (أيام/ساعات) +
+                          // مدّة الكورس (عدد جرعات أو عدد أيام). 0 غير صالح.
                           if (kind == ReminderKind.medication) ...[
                             const SizedBox(height: 14),
-                            label('فاصل الجرعات (أيام الراحة)'),
-                            Builder(builder: (_) {
-                              final rest =
-                                  intervalDays >= 2 ? intervalDays - 1 : 0;
-                              final restText = rest == 0
-                                  ? 'يوميًّا — جرعة كلّ يوم'
-                                  : rest == 1
-                                      ? 'يوم بعد يوم (جرعة ثمّ يوم راحة)'
-                                      : 'جرعة ثمّ $rest أيام راحة';
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                          Icons.remove_circle_outline),
-                                      onPressed: rest > 0
-                                          ? () => setState(() {
-                                                final nr = rest - 1;
-                                                intervalDays =
-                                                    nr == 0 ? 0 : nr + 1;
-                                              })
-                                          : null,
-                                    ),
-                                    Container(
-                                      constraints:
-                                          const BoxConstraints(minWidth: 40),
-                                      alignment: Alignment.center,
-                                      child: Text('$rest',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 22)),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.add_circle_outline),
-                                      onPressed: rest < 30
-                                          ? () => setState(
-                                              () => intervalDays = rest + 2)
-                                          : null,
-                                    ),
-                                  ]),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 2),
-                                    child: Text(restText,
-                                        style: TextStyle(
-                                            fontSize: 12.5,
-                                            color: scheme.onSurface
-                                                .withOpacity(0.65))),
-                                  ),
-                                ],
-                              );
-                            }),
+                            label('فاصل الجرعات'),
+                            Wrap(spacing: 8, runSpacing: 6, children: [
+                              ChoiceChip(
+                                label: const Text('كل أيام'),
+                                selected: !intervalInHours,
+                                onSelected: (_) =>
+                                    setState(() => intervalInHours = false),
+                              ),
+                              ChoiceChip(
+                                label: const Text('كل ساعات'),
+                                selected: intervalInHours,
+                                onSelected: (_) =>
+                                    setState(() => intervalInHours = true),
+                              ),
+                            ]),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Row(children: [
+                                const Text('كل ',
+                                    style: TextStyle(fontSize: 15)),
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  onPressed: () => setState(() {
+                                    if (intervalInHours) {
+                                      if (hoursEvery > 1) hoursEvery--;
+                                    } else if (daysEvery > 1) {
+                                      daysEvery--;
+                                    }
+                                  }),
+                                ),
+                                Container(
+                                  constraints:
+                                      const BoxConstraints(minWidth: 40),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                      intervalInHours
+                                          ? '$hoursEvery'
+                                          : '$daysEvery',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 22)),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  onPressed: () => setState(() {
+                                    if (intervalInHours) {
+                                      if (hoursEvery < 24) hoursEvery++;
+                                    } else if (daysEvery < 60) {
+                                      daysEvery++;
+                                    }
+                                  }),
+                                ),
+                                Text(intervalInHours ? ' ساعة' : ' يوم',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
+                              ]),
+                            ),
                             const SizedBox(height: 14),
                             label(s.t('med_course_len')),
                             Wrap(spacing: 8, runSpacing: 6, children: [
                               ChoiceChip(
                                 label: Text(s.t('med_continuous')),
-                                selected: doseCount == 0,
+                                selected: courseMode == 0,
                                 onSelected: (_) =>
-                                    setState(() => doseCount = 0),
+                                    setState(() => courseMode = 0),
                               ),
                               ChoiceChip(
-                                label: Text(s.t('med_total')),
-                                selected: doseCount > 0,
-                                onSelected: (_) => setState(() =>
-                                    doseCount = doseCount > 0 ? doseCount : 10),
+                                label: const Text('عدد الجرعات'),
+                                selected: courseMode == 1,
+                                onSelected: (_) =>
+                                    setState(() => courseMode = 1),
+                              ),
+                              ChoiceChip(
+                                label: const Text('عدد الأيام'),
+                                selected: courseMode == 2,
+                                onSelected: (_) =>
+                                    setState(() => courseMode = 2),
                               ),
                             ]),
-                            if (doseCount > 0)
+                            if (courseMode == 1)
                               Padding(
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Row(children: [
                                   IconButton(
                                     icon: const Icon(
                                         Icons.remove_circle_outline),
-                                    onPressed: doseCount > 1
-                                        ? () => setState(() => doseCount--)
+                                    onPressed: doseValue > 1
+                                        ? () => setState(() => doseValue--)
                                         : null,
                                   ),
-                                  Text('$doseCount ${s.t('med_dose_unit')}',
+                                  Text('$doseValue ${s.t('med_dose_unit')}',
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 15)),
+                                          fontSize: 16)),
                                   IconButton(
                                     icon: const Icon(Icons.add_circle_outline),
-                                    onPressed: doseCount < 365
-                                        ? () => setState(() => doseCount++)
+                                    onPressed: doseValue < 365
+                                        ? () => setState(() => doseValue++)
+                                        : null,
+                                  ),
+                                ]),
+                              ),
+                            if (courseMode == 2)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Row(children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                        Icons.remove_circle_outline),
+                                    onPressed: courseDaysValue > 1
+                                        ? () =>
+                                            setState(() => courseDaysValue--)
+                                        : null,
+                                  ),
+                                  Text('$courseDaysValue ${s.t('day_unit')}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
+                                  IconButton(
+                                    icon: const Icon(Icons.add_circle_outline),
+                                    onPressed: courseDaysValue < 365
+                                        ? () =>
+                                            setState(() => courseDaysValue++)
                                         : null,
                                   ),
                                 ]),
@@ -1180,17 +1228,29 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                             onPressed: () async {
                               final finalTitle = composeTitle();
                               final isMed = kind == ReminderKind.medication;
-                              // «كل عدد أيام» (فاصل الجرعات بأيام الراحة) خاصّ
-                              // بالدواء؛ يُجدوَل عبر آليّة المواعيد المتكرّرة نفسها.
-                              final hasInterval = intervalDays >= 2;
-                              // كورس (فاصل مخصّص أو عدد جرعات) يمرّ دومًا عبر
-                              // setStandalone لا التكرار الأسبوعيّ.
-                              final isCourse =
-                                  hasInterval || (isMed && doseCount > 0);
+                              // احسب قيم الدواء من المُحدِّدات (فاصل أيام/ساعات +
+                              // مدّة الكورس بعدد جرعات أو عدد أيام).
+                              int medIntervalDays = 0,
+                                  medIntervalHours = 0,
+                                  medDoseCount = 0,
+                                  medCourseDays = 0;
+                              if (isMed) {
+                                if (intervalInHours) {
+                                  medIntervalHours = hoursEvery; // كل N ساعة
+                                } else if (daysEvery >= 2) {
+                                  medIntervalDays = daysEvery; // كل N يوم
+                                } // daysEvery==1 ⇒ يوميّ (بلا فاصل)
+                                if (courseMode == 1) {
+                                  medDoseCount = doseValue;
+                                } else if (courseMode == 2) {
+                                  medCourseDays = courseDaysValue;
+                                }
+                              }
+                              // الدواء يُجدوَل عبر آليّة الكورس (لا التكرار الأسبوعيّ).
                               try {
                                 if (repeat == ReminderRepeat.weekly &&
                                     weekdays.isNotEmpty &&
-                                    !isCourse) {
+                                    !isMed) {
                                   await provider.setStandaloneWeekly(
                                       finalTitle, time, weekdays,
                                       importance: importance,
@@ -1199,16 +1259,16 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                 } else {
                                   await provider.setStandalone(
                                       combined(),
-                                      (hasInterval || isMed)
-                                          ? ReminderRepeat.daily
-                                          : repeat,
+                                      isMed ? ReminderRepeat.daily : repeat,
                                       finalTitle,
                                       importance: importance,
                                       preAlerts: preAlerts.toList()..sort(),
                                       location: mapLinkCtrl.text.trim(),
                                       attachmentPath: attachmentPath,
-                                      intervalDays: hasInterval ? intervalDays : 0,
-                                      doseCount: isMed ? doseCount : 0,
+                                      intervalDays: medIntervalDays,
+                                      intervalHours: medIntervalHours,
+                                      doseCount: medDoseCount,
+                                      courseDays: medCourseDays,
                                       color: customColor,
                                       existing: existing);
                                 }

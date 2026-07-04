@@ -300,7 +300,10 @@ class NotificationService {
     // كورس دواء (فاصل أيام مخصّص أو عدد جرعات محدّد): لا يوجد تكرار «كل N يوم» أو
     // «أوقف بعد N» أصليّ في الإضافة ⇒ نجدول مجموعة من المواعيد القادمة يدويًّا،
     // وتُحدَّث عند كل فتح للتطبيق (ensureScheduled).
-    if (reminder.intervalDays >= 2 || reminder.doseCount > 0) {
+    if (reminder.intervalDays >= 2 ||
+        reminder.intervalHours > 0 ||
+        reminder.doseCount > 0 ||
+        reminder.courseDays > 0) {
       await _scheduleMedCourse(reminder, safeTitle, safeBody);
       return;
     }
@@ -415,11 +418,22 @@ class NotificationService {
     await _plugin.cancel(base);
     await _cancelFollowups(base);
 
-    // نقطة بداية الفهرس (قفزة سريعة للكورس المستمر بفاصل أيام).
+    // نهاية الكورس بالأيام (إن حُدّدت) — بديل لعدد الجرعات.
+    final courseEnd = reminder.courseDays > 0
+        ? tz.TZDateTime.from(
+            reminder.time.add(Duration(days: reminder.courseDays)), tz.local)
+        : null;
+
+    // نقطة بداية الفهرس (قفزة سريعة للكورس المستمر بفاصل ثابت).
     var i = 0;
-    if (limit == 0 && reminder.intervalDays >= 2) {
-      final passed = now.difference(reminder.time).inDays;
-      if (passed > 0) i = passed ~/ reminder.intervalDays;
+    if (limit == 0) {
+      if (reminder.intervalHours > 0) {
+        final passed = now.difference(reminder.time).inHours;
+        if (passed > 0) i = passed ~/ reminder.intervalHours;
+      } else if (reminder.intervalDays >= 2) {
+        final passed = now.difference(reminder.time).inDays;
+        if (passed > 0) i = passed ~/ reminder.intervalDays;
+      }
     }
 
     var scheduled = 0;
@@ -429,6 +443,7 @@ class NotificationService {
       if (limit > 0 && i >= limit) break;
       final occ = tz.TZDateTime.from(medOccurrenceAt(reminder, i), tz.local);
       i++;
+      if (courseEnd != null && occ.isAfter(courseEnd)) break; // انتهى الكورس.
       if (!occ.isAfter(now)) continue; // موعد فات ⇒ تخطٍّ.
       await _zonedSchedule(
         base + scheduled * _forgetStride,

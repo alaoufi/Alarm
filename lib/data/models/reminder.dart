@@ -27,8 +27,14 @@ class Reminder {
   /// **دواء**: فاصل الأيام بين الجرعات (≥ 2 ⇒ «كل N يوم»). 0 = تكرار عاديّ.
   final int intervalDays;
 
+  /// **دواء**: فاصل الساعات بين الجرعات (> 0 ⇒ «كل N ساعة»، يسبق فاصل الأيام).
+  final int intervalHours;
+
   /// **دواء**: عدد جرعات الكورس (> 0 ⇒ يتوقّف بعدها). 0 = مستمر.
   final int doseCount;
+
+  /// **دواء**: مدّة الكورس بالأيام (> 0 ⇒ يتوقّف بعدها) — بديل لعدد الجرعات.
+  final int courseDays;
 
   /// لون اختياريّ للتنبيه (قيمة ARGB) — null = اللون التلقائيّ حسب المجال الزمنيّ.
   final int? color;
@@ -46,7 +52,9 @@ class Reminder {
     this.attachmentPath = '',
     required this.notificationId,
     this.intervalDays = 0,
+    this.intervalHours = 0,
     this.doseCount = 0,
+    this.courseDays = 0,
     this.color,
   });
 
@@ -67,7 +75,9 @@ class Reminder {
       'location': location,
       'attachment': attachmentPath,
       'interval_days': intervalDays,
+      'interval_hours': intervalHours,
       'dose_count': doseCount,
+      'course_days': courseDays,
       'color': color,
     };
   }
@@ -90,7 +100,9 @@ class Reminder {
       location: (map['location'] as String?) ?? '',
       attachmentPath: (map['attachment'] as String?) ?? '',
       intervalDays: (map['interval_days'] as int?) ?? 0,
+      intervalHours: (map['interval_hours'] as int?) ?? 0,
       doseCount: (map['dose_count'] as int?) ?? 0,
+      courseDays: (map['course_days'] as int?) ?? 0,
       color: map['color'] as int?,
     );
   }
@@ -108,7 +120,9 @@ class Reminder {
     String? attachmentPath,
     int? notificationId,
     int? intervalDays,
+    int? intervalHours,
     int? doseCount,
+    int? courseDays,
     int? color,
   }) {
     return Reminder(
@@ -124,7 +138,9 @@ class Reminder {
       attachmentPath: attachmentPath ?? this.attachmentPath,
       notificationId: notificationId ?? this.notificationId,
       intervalDays: intervalDays ?? this.intervalDays,
+      intervalHours: intervalHours ?? this.intervalHours,
       doseCount: doseCount ?? this.doseCount,
+      courseDays: courseDays ?? this.courseDays,
       color: color ?? this.color,
     );
   }

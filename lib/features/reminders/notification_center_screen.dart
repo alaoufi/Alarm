@@ -404,7 +404,9 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
           location: r.location,
           attachmentPath: r.attachmentPath,
           intervalDays: r.intervalDays,
+          intervalHours: r.intervalHours,
           doseCount: r.doseCount,
+          courseDays: r.courseDays,
           existing: r);
     }
     if (mounted) {

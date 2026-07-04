@@ -16,7 +16,10 @@ class TodayDashboardScreen extends StatelessWidget {
   DateTime _nextFire(Reminder r) {
     final now = DateTime.now();
     final t = r.time;
-    if (r.intervalDays >= 2 || r.doseCount > 0) {
+    if (r.intervalDays >= 2 ||
+        r.intervalHours > 0 ||
+        r.doseCount > 0 ||
+        r.courseDays > 0) {
       final next =
           medOccurrencesBetween(r, now, now.add(const Duration(days: 3650)));
       return next.isEmpty ? DateTime(9999) : next.first;
