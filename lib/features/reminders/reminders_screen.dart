@@ -759,25 +759,36 @@ class _RemindersScreenState extends State<RemindersScreen> {
                           ),
                         ),
                         if (showNext) ...[
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Icon(Icons.event_upcoming,
-                                  size: 13, color: accent),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  'التالي: ${_nextLabel(nextFire)}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: accent,
+                          const SizedBox(height: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: accent.withOpacity(dark ? 0.28 : 0.14),
+                              borderRadius: BorderRadius.circular(9),
+                              border: Border.all(
+                                  color: accent.withOpacity(0.45), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.notifications_active,
+                                    size: 13, color: accent),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    'التنبيه القادم: ${_nextLabel(nextFire)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: accent,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ],
@@ -926,24 +937,37 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   expired ? s.t('nc_expired') : repeatInfo,
                 ),
                 if (showNext) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.event_upcoming, size: 12, color: accent),
-                      const SizedBox(width: 3),
-                      Flexible(
-                        child: Text(
-                          _nextLabel(nextFire),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: accent,
+                  const SizedBox(height: 5),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: accent.withOpacity(dark ? 0.28 : 0.14),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                          color: accent.withOpacity(0.45), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.notifications_active,
+                            size: 12, color: accent),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            'القادم: ${_nextLabel(nextFire)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: accent,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ],
