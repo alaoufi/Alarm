@@ -659,6 +659,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
     if (r.doseCount > 0) repeatInfo += ' • ${r.doseCount} جرعة';
 
+    // موعد التنبيه القادم (يُعرض للتنبيهات النشِطة غير المنتهية).
+    final nextFire = (on && !expired) ? _nextFire(r) : null;
+    final showNext = nextFire != null && nextFire.year < 9000;
+
     final surface = scheme.surface;
     final gradTop = Color.alphaBlend(accent.withOpacity(0.18), surface);
     final gradBottom = Color.alphaBlend(accent.withOpacity(0.05), surface);
@@ -754,6 +758,28 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                 : scheme.onSurface.withOpacity(0.85),
                           ),
                         ),
+                        if (showNext) ...[
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(Icons.event_upcoming,
+                                  size: 13, color: accent),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'التالي: ${_nextLabel(nextFire)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: accent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -802,6 +828,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
       repeatInfo = _repeatLabel(s, r.repeat);
     }
     if (r.doseCount > 0) repeatInfo += ' • ${r.doseCount} جرعة';
+
+    // موعد التنبيه القادم (يُعرض للتنبيهات النشِطة غير المنتهية).
+    final nextFire = (on && !expired) ? _nextFire(r) : null;
+    final showNext = nextFire != null && nextFire.year < 9000;
 
     final surface = scheme.surface;
     final gradTop = Color.alphaBlend(accent.withOpacity(0.20), surface);
@@ -895,6 +925,27 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   expired ? Icons.history_toggle_off : Icons.repeat,
                   expired ? s.t('nc_expired') : repeatInfo,
                 ),
+                if (showNext) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.event_upcoming, size: 12, color: accent),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          _nextLabel(nextFire),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: accent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -1131,6 +1182,26 @@ class _RemindersScreenState extends State<RemindersScreen> {
       case ReminderRepeat.hijriYearly:
         return nextHijriAnniversary(t, now);
     }
+  }
+
+  /// صياغة ودّية لموعد التنبيه القادم: «اليوم/غدًا/اسم اليوم/التاريخ + الساعة».
+  String _nextLabel(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final diff = day.difference(today).inDays;
+    final time = DateFormat('h:mm a', 'ar').format(dt);
+    String when;
+    if (diff == 0) {
+      when = 'اليوم';
+    } else if (diff == 1) {
+      when = 'غدًا';
+    } else if (diff > 1 && diff < 7) {
+      when = _weekdayAr[dt.weekday] ?? '';
+    } else {
+      when = DateFormat('d MMMM', 'ar').format(dt);
+    }
+    return '$when • $time';
   }
 
   String _countdown(Duration d) {
