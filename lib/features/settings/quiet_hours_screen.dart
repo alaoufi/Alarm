@@ -13,21 +13,34 @@ class QuietHoursScreen extends StatelessWidget {
 
   String _fmt(BuildContext context, int minutes) {
     final t = TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
-    return t.format(context);
+    // نظام ١٢ ساعة دائمًا (ص/م) حتى لو كان الجهاز على ٢٤ ساعة.
+    return MaterialLocalizations.of(context)
+        .formatTimeOfDay(t, alwaysUse24HourFormat: false);
+  }
+
+  /// منتقي وقت بنظام ١٢ ساعة (ص/م ظاهرة، الساعات ١–١٢، الدقائق ٠٠–٥٩) يفتح في
+  /// وضع الكتابة كي يكتب المستخدم الرقم مباشرةً ضمن المدى المتاح. نُجبر تنسيق
+  /// ١٢ ساعة عبر MediaQuery حتى لو كان الجهاز على نظام ٢٤ ساعة (فتختفي ص/م).
+  Future<TimeOfDay?> _pickTime(
+      BuildContext context, TimeOfDay initial, String help) {
+    return showTimePicker(
+      context: context,
+      initialTime: initial,
+      helpText: help,
+      initialEntryMode: TimePickerEntryMode.input,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+        child: child!,
+      ),
+    );
   }
 
   Future<void> _addWindow(BuildContext context, SettingsProvider st) async {
-    final start = await showTimePicker(
-      context: context,
-      initialTime: const TimeOfDay(hour: 2, minute: 0),
-      helpText: S.of(context).t('quiet_from'),
-    );
+    final start = await _pickTime(context,
+        const TimeOfDay(hour: 2, minute: 0), S.of(context).t('quiet_from'));
     if (start == null || !context.mounted) return;
-    final end = await showTimePicker(
-      context: context,
-      initialTime: const TimeOfDay(hour: 7, minute: 0),
-      helpText: S.of(context).t('quiet_to'),
-    );
+    final end = await _pickTime(context,
+        const TimeOfDay(hour: 7, minute: 0), S.of(context).t('quiet_to'));
     if (end == null) return;
     final w = QuietWindow(
         start.hour * 60 + start.minute, end.hour * 60 + end.minute);
