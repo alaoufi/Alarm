@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/models/enums.dart';
+import '../../data/models/quiet_window.dart';
 import '../../services/notification_service.dart';
 
 /// مكان زرّ صفحة «معلومات عامة».
@@ -30,6 +31,7 @@ class SettingsProvider extends ChangeNotifier {
   // «لا يُفوَّت» قبل إيقاف المنبّه: 0 = معطّل · 1 = أرقام (مسألة حساب) · 2 = كتابة كلمة.
   int _dismissChallenge = 0;
   int _defaultPreAlert = 0; // تنبيه قبل الوقت الافتراضي بالدقائق (0 = بلا)
+  List<QuietWindow> _quietWindows = const []; // فترات إسكات صوت المنبّه
   String? _customToneUri; // رابط نغمة مخصّصة من الجهاز (عند alarmTone=custom)
   String? _customToneTitle; // اسم النغمة المخصّصة للعرض
   int _customToneSeq = 0; // معرّف متزايد لقناة النغمة المخصّصة
@@ -73,6 +75,9 @@ class SettingsProvider extends ChangeNotifier {
   bool get mathToDismiss => _dismissChallenge != 0; // توافق خلفيّ.
   bool get gradualVolume => _gradualVolume;
   int get defaultPreAlert => _defaultPreAlert;
+
+  /// فترات الإسكات المحفوظة (لا صوت للمنبّه فيها؛ يبقى الإشعار ظاهرًا).
+  List<QuietWindow> get quietWindows => List.unmodifiable(_quietWindows);
   String? get customToneUri => _customToneUri;
   String? get customToneTitle => _customToneTitle;
   Set<String> get favoriteTones => _favoriteTones;
@@ -263,6 +268,7 @@ class SettingsProvider extends ChangeNotifier {
   static const _kRuleOpacity = 'rule_opacity';
   static const _kRuleOnLine = 'rule_on_line';
   static const _kPrivacyMode = 'privacy_mode';
+  static const _kQuietWindows = 'quiet_windows';
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -297,8 +303,13 @@ class SettingsProvider extends ChangeNotifier {
     _dismissChallenge = prefs.getInt('dismiss_challenge') ??
         ((prefs.getBool('math_to_dismiss') ?? false) ? 1 : 0);
     _defaultPreAlert = prefs.getInt('default_pre_alert') ?? 0;
+    _quietWindows = (prefs.getStringList(_kQuietWindows) ?? const [])
+        .map(QuietWindow.decode)
+        .whereType<QuietWindow>()
+        .toList();
     NotificationService.instance.snoozeMinutes = _snoozeMinutes;
     NotificationService.instance.cantMiss = _dismissChallenge != 0;
+    NotificationService.instance.quietWindows = _quietWindows;
     _customToneUri = prefs.getString(_kCustomToneUri);
     _customToneTitle = prefs.getString(_kCustomToneTitle);
     _customToneSeq = prefs.getInt(_kCustomToneSeq) ?? 0;
@@ -505,6 +516,32 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('default_pre_alert', minutes);
+  }
+
+  Future<void> _saveQuietWindows() async {
+    _quietWindows.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
+    NotificationService.instance.quietWindows = _quietWindows;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+        _kQuietWindows, _quietWindows.map((w) => w.encode()).toList());
+  }
+
+  /// يضيف فترة إسكات جديدة (يتجاهل التكرار الحرفيّ نفسه).
+  Future<void> addQuietWindow(QuietWindow w) async {
+    if (_quietWindows.any((e) =>
+        e.startMinutes == w.startMinutes && e.endMinutes == w.endMinutes)) {
+      return;
+    }
+    _quietWindows = [..._quietWindows, w];
+    await _saveQuietWindows();
+  }
+
+  /// يحذف فترة الإسكات عند الفهرس [index].
+  Future<void> removeQuietWindow(int index) async {
+    if (index < 0 || index >= _quietWindows.length) return;
+    _quietWindows = [..._quietWindows]..removeAt(index);
+    await _saveQuietWindows();
   }
 
   /// يضبط نغمة مخصّصة مختارة من نغمات الجهاز ([uri] رابطها، [title] اسمها).

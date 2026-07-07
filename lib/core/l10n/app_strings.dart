@@ -510,6 +510,19 @@ class S {
     'reliability_test': 'اختبار الموثوقية',
     'reminder_tools': 'أدوات التنبيهات',
     'reminder_defaults': 'إعدادات التنبيه الافتراضية',
+    'quiet_hours': 'أوقات الإسكات',
+    'quiet_hours_short': 'فترات بلا صوت للمنبّه',
+    'quiet_hours_desc':
+        'حدّد فترات يوميّة لا يصدر فيها صوت المنبّه — يبقى الإشعار ظاهرًا وواضحًا لكن بلا صوت أو اهتزاز.',
+    'quiet_hours_add': 'إضافة فترة إسكات',
+    'quiet_hours_empty':
+        'لا توجد فترات إسكات بعد. أضِف فترة (مثل من ٢:٠٠ ص إلى ٧:٠٠ ص) كي لا يصدر صوت المنبّه خلالها.',
+    'quiet_hours_note':
+        'أثناء هذه الفترات يظهر التنبيه بوضوح في شريط الإشعارات، لكن دون صوت أو اهتزاز أو شاشة كاملة.',
+    'quiet_from': 'من',
+    'quiet_to': 'إلى',
+    'quiet_delete': 'حذف الفترة',
+    'quiet_overnight': 'تعبر منتصف الليل',
     'alarm_tone': 'النغمة',
     'snooze': 'الغفوة',
     'med_log_dose': 'تسجيل جرعة',
@@ -987,6 +1000,19 @@ class S {
     'reliability_test': 'Reliability test',
     'reminder_tools': 'Reminder tools',
     'reminder_defaults': 'Default reminder settings',
+    'quiet_hours': 'Quiet hours',
+    'quiet_hours_short': 'Silent periods for the alarm',
+    'quiet_hours_desc':
+        'Set daily periods when the alarm makes no sound — the notification still appears clearly, but without sound or vibration.',
+    'quiet_hours_add': 'Add a quiet period',
+    'quiet_hours_empty':
+        'No quiet periods yet. Add one (e.g. 2:00 AM to 7:00 AM) to silence the alarm during it.',
+    'quiet_hours_note':
+        'During these periods the alarm shows clearly in the notification bar, but without sound, vibration, or full screen.',
+    'quiet_from': 'From',
+    'quiet_to': 'To',
+    'quiet_delete': 'Delete period',
+    'quiet_overnight': 'crosses midnight',
     'alarm_tone': 'Tone',
     'snooze': 'Snooze',
     'med_log_dose': 'Log a dose',

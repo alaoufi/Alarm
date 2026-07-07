@@ -16,6 +16,7 @@ import '../reminders/reminder_defaults_screen.dart';
 import '../reminders/reliability_test_screen.dart';
 import '../security/security_settings_screen.dart';
 import '../sounds/sound_library_screen.dart';
+import 'quiet_hours_screen.dart';
 import 'settings_provider.dart';
 
 /// شاشة الإعدادات — مخصّصة لتطبيق التنبيهات: بطاقات بارزة ثلاثية الأبعاد قابلة
@@ -354,6 +355,22 @@ class SettingsScreen extends StatelessWidget {
       // إعدادات افتراضية للتنبيه (نغمة/غفوة/قبل الوقت…).
       _nav(context, Icons.tune, s.t('reminder_defaults'),
           const ReminderDefaultsScreen()),
+      // أوقات الإسكات: فترات لا يصدر فيها صوت المنبّه (يبقى الإشعار ظاهرًا).
+      ListTile(
+        leading: Icon(Icons.nightlight_round, color: scheme.primary),
+        title: Text(s.t('quiet_hours'),
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(
+          st.quietWindows.isEmpty
+              ? s.t('quiet_hours_short')
+              : '${st.quietWindows.length} ${s.t('quiet_hours_short')}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: const Icon(Icons.chevron_left),
+        onTap: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const QuietHoursScreen())),
+      ),
       // وضع «لا يُفوَّت»: اختيار نوع التحدّي قبل إيقاف المنبّه.
       ListTile(
         leading: const Icon(Icons.gpp_maybe_outlined),

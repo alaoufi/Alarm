@@ -8,6 +8,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../core/time/hijri_recurrence.dart';
 import '../data/models/enums.dart';
+import '../data/models/quiet_window.dart';
 import '../data/models/reminder.dart';
 import 'med_occurrences.dart';
 import 'time_service.dart';
@@ -42,6 +43,18 @@ class NotificationService {
   /// «لا يُفوَّت» مفعَّل: نمنع زرّ «إيقاف» من الإشعار حتى لا يُغلَق دون تحدّي،
   /// ونوجّه النقر إلى شاشة المنبّه (حيث يُطلَب الحساب/كتابة الكلمة). تُضبط من الإعدادات.
   bool cantMiss = false;
+
+  /// فترات الإسكات: لا يصدر صوت المنبّه فيها (يبقى الإشعار ظاهرًا). تُضبط من الإعدادات.
+  List<QuietWindow> quietWindows = const [];
+
+  /// هل الوقت [t] يقع ضمن أي فترة إسكات؟ (يُقرَّر الصوت وقت الجدولة لكل موعد).
+  bool isQuietAt(DateTime t) {
+    final m = t.hour * 60 + t.minute;
+    for (final w in quietWindows) {
+      if (w.contains(m)) return true;
+    }
+    return false;
+  }
 
   /// «وضع عدم النسيان» للتذكيرات الحرجة: يُعاد التنبيه تلقائيًّا حتى التأكيد.
   /// عدد مرّات الإعادة والفاصل بينها (يُضبطان لاحقًا من الإعدادات).
@@ -109,6 +122,19 @@ class NotificationService {
         'تنبيهات هادئة',
         description: 'إشعارات بلا صوت',
         importance: Importance.defaultImportance,
+        playSound: false,
+        enableVibration: false,
+      ),
+    );
+
+    // قناة «أوقات الإسكات»: تنبيه ظاهر وواضح (أهمية عالية) لكن بلا صوت/اهتزاز —
+    // يُستخدم عندما يقع موعد المنبّه ضمن فترة إسكات اختارها المستخدم.
+    await androidImpl?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'alaoufi_alarm_muted',
+        'المنبّه (وضع الإسكات)',
+        description: 'تنبيهات ظاهرة بلا صوت أثناء أوقات الإسكات',
+        importance: Importance.high,
         playSound: false,
         enableVibration: false,
       ),
@@ -189,7 +215,8 @@ class NotificationService {
   /// - medium: صوت فقط.
   /// - high: صوت + اهتزاز.
   /// - critical: شاشة كاملة + إصرار (تكرار الصوت) حتى تفاعل المستخدم.
-  AndroidNotificationDetails _alarmDetails(ReminderImportance imp) {
+  AndroidNotificationDetails _alarmDetails(ReminderImportance imp,
+      {bool quiet = false}) {
     if (imp == ReminderImportance.low) {
       return const AndroidNotificationDetails(
         'alaoufi_quiet',
@@ -199,6 +226,21 @@ class NotificationService {
         priority: Priority.defaultPriority,
         playSound: false,
         enableVibration: false,
+      );
+    }
+    // ضمن فترة إسكات: تنبيه ظاهر وواضح لكن بلا صوت/اهتزاز، ولا شاشة كاملة ولا
+    // إصرار — فلا يُزعج المستخدم لكنه يبقى مرئيًّا ويُفتَح عاديًّا عند النقر.
+    if (quiet) {
+      return const AndroidNotificationDetails(
+        'alaoufi_alarm_muted',
+        'المنبّه (وضع الإسكات)',
+        channelDescription: 'تنبيهات ظاهرة بلا صوت أثناء أوقات الإسكات',
+        importance: Importance.high,
+        priority: Priority.high,
+        category: AndroidNotificationCategory.alarm,
+        playSound: false,
+        enableVibration: false,
+        autoCancel: true,
       );
     }
     final isCustom = _tone == 'custom' && _customUri != null;
@@ -246,8 +288,9 @@ class NotificationService {
     );
   }
 
-  NotificationDetails _detailsFor(ReminderImportance imp) =>
-      NotificationDetails(android: _alarmDetails(imp));
+  NotificationDetails _detailsFor(ReminderImportance imp,
+          {bool quiet = false}) =>
+      NotificationDetails(android: _alarmDetails(imp, quiet: quiet));
 
   /// وضع الجدولة: المنبّهات **الحرجة** تستخدم `alarmClock` (أعلى أولوية، تتجاوز
   /// وضع توفير الطاقة/Doze وتعمل حتى لو كان التطبيق مغلقًا) — وهو الأكثر موثوقية
@@ -317,7 +360,7 @@ class NotificationService {
         safeTitle,
         safeBody,
         tz.TZDateTime.from(next, tz.local),
-        _detailsFor(reminder.importance),
+        _detailsFor(reminder.importance, quiet: isQuietAt(next)),
         mode: _mode(reminder.importance),
         payload: 'note:${reminder.noteId}|title:$safeTitle|body:$safeBody'
             '|imp:${reminder.importance.dbValue}|base:${reminder.notificationId}',
@@ -352,7 +395,7 @@ class NotificationService {
       safeTitle,
       safeBody,
       scheduled,
-      _detailsFor(reminder.importance),
+      _detailsFor(reminder.importance, quiet: isQuietAt(reminder.time)),
       mode: _mode(reminder.importance),
       match: match,
       payload: 'note:${reminder.noteId}|title:$safeTitle|body:$safeBody'
@@ -373,7 +416,7 @@ class NotificationService {
           safeTitle,
           '$safeBody ⏰',
           when,
-          _detailsFor(ReminderImportance.critical),
+          _detailsFor(ReminderImportance.critical, quiet: isQuietAt(when)),
           mode: AndroidScheduleMode.alarmClock,
           payload: 'note:${reminder.noteId}|title:$safeTitle|body:$safeBody'
               '|imp:critical|base:$base',
@@ -395,7 +438,7 @@ class NotificationService {
             '⏳ ${_beforeLabel(mins)} • ${title.trim().isEmpty ? "تذكير" : title.trim()}',
             safeBody,
             when,
-            _detailsFor(ReminderImportance.medium),
+            _detailsFor(ReminderImportance.medium, quiet: isQuietAt(when)),
             mode: AndroidScheduleMode.exactAllowWhileIdle,
             payload: 'note:${reminder.noteId}|title:$safeTitle|body:$safeBody'
                 '|imp:medium|base:$base',
@@ -450,7 +493,7 @@ class NotificationService {
         safeTitle,
         safeBody,
         occ,
-        _detailsFor(reminder.importance),
+        _detailsFor(reminder.importance, quiet: isQuietAt(occ)),
         mode: _mode(reminder.importance),
         payload: 'note:${reminder.noteId}|title:$safeTitle|body:$safeBody'
             '|imp:${reminder.importance.dbValue}|base:$base',
@@ -488,9 +531,14 @@ class NotificationService {
         return;
       default:
         // ضغط على جسم الإشعار: تذكير حرج (أو وضع «لا يُفوَّت») ⇒ شاشة المنبّه،
-        // وإلا افتح الملاحظة.
+        // وإلا افتح الملاحظة. لكن أثناء فترة إسكات لا نفتح شاشة المنبّه (كي لا
+        // يبدأ صوتها) — نفتح الملاحظة/التطبيق فقط احترامًا لوضع الإسكات.
         final imp = _extractStr(payload, 'imp:');
-        if ((imp == 'critical' || cantMiss) && onAlarm != null && !fromBackground) {
+        final quietNow = isQuietAt(DateTime.now());
+        if (!quietNow &&
+            (imp == 'critical' || cantMiss) &&
+            onAlarm != null &&
+            !fromBackground) {
           onAlarm!({
             'title': _extractStr(payload, 'title:') ?? '⏰',
             'body': _extractStr(payload, 'body:') ?? '',
@@ -549,7 +597,7 @@ class NotificationService {
       title,
       body,
       when,
-      _detailsFor(ReminderImportance.critical),
+      _detailsFor(ReminderImportance.critical, quiet: isQuietAt(when)),
       mode: AndroidScheduleMode.alarmClock,
       payload: 'note:${noteId ?? -1}|title:$title|body:$body'
           '|imp:critical|base:$base',
@@ -568,7 +616,7 @@ class NotificationService {
       title,
       body,
       when,
-      _detailsFor(imp),
+      _detailsFor(imp, quiet: isQuietAt(when)),
       mode: _mode(imp),
       payload: payload,
     );
