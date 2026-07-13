@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/backup_service.dart';
+import '../../services/cleanup_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/sync/sync_service.dart';
 import '../editor/rich_text_field.dart';
@@ -45,6 +46,8 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
       _reassertPinnedNotes();
       // حدّث موجز الصباح بعدد التذكيرات الحاليّ.
       _refreshBriefing();
+      // تنظيف عميق للملفّات المؤقّتة المتراكمة (تحديثات/تصدير/نسخ قديمة).
+      CleanupService.instance.purgeTempFiles();
     });
   }
 
@@ -103,6 +106,12 @@ class _RootScreenState extends State<RootScreen> with WidgetsBindingObserver {
       _refreshBriefing();
     } else if (state == AppLifecycleState.paused) {
       _autoSync(SyncTrigger.close);
+      // مغادرة التطبيق: حرّر ذاكرة العمل (ذاكرة الصور + إيقاف أي صوت معاينة)
+      // ونظّف الملفّات المؤقّتة المتراكمة — تنظيف حقيقيّ عند الخروج.
+      CleanupService.instance.releaseMemory();
+      CleanupService.instance.purgeTempFiles();
+    } else if (state == AppLifecycleState.detached) {
+      CleanupService.instance.releaseMemory();
     }
   }
 

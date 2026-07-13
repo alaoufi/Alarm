@@ -53,8 +53,17 @@ class _AlarmScreenState extends State<AlarmScreen> {
     _startLoopingSound(settings);
     // تصعيد متعدّد المراحل: كل 12 ثانية بلا تفاعل يزيد الإلحاح (صوت أقصى +
     // اهتزاز متصاعد) — للمنبّهات الحرجة التي يجب ألّا تُفوَّت.
-    _escalateTimer = Timer.periodic(const Duration(seconds: 12), (_) {
-      if (!mounted) return;
+    _escalateTimer = Timer.periodic(const Duration(seconds: 12), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      // نحدّ التصعيد بعدد مراحل معدود: بعد بلوغ الذروة نوقف المؤقّت فلا يستمرّ
+      // رفع الصوت/الاهتزاز/إعادة البناء بلا نهاية (تسرّب موارد لو تُرك مفتوحًا).
+      if (_stage >= 5) {
+        t.cancel();
+        return;
+      }
       setState(() => _stage++);
       if (_raised) AlarmVolume.raise(targetPercent: 100);
       final pulses = _stage.clamp(1, 4);
@@ -269,44 +278,51 @@ class _AlarmScreenState extends State<AlarmScreen> {
       return isWord ? t == word : int.tryParse(t) == a + b;
     }
 
-    final ok = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: Text(isWord ? s.t('dismiss_word') : s.t('dismiss_calc')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(isWord ? word : '$a + $b = ؟',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 26, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              TextField(
-                controller: ctrl,
-                keyboardType:
-                    isWord ? TextInputType.text : TextInputType.number,
-                autofocus: true,
-                textAlign: TextAlign.center,
-                onChanged: (_) => setLocal(() {}),
-                decoration: const InputDecoration(border: OutlineInputBorder()),
+    bool ok = false;
+    try {
+      ok = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => StatefulBuilder(
+              builder: (ctx, setLocal) => AlertDialog(
+                title: Text(isWord ? s.t('dismiss_word') : s.t('dismiss_calc')),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(isWord ? word : '$a + $b = ؟',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 26, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: ctrl,
+                      keyboardType:
+                          isWord ? TextInputType.text : TextInputType.number,
+                      autofocus: true,
+                      textAlign: TextAlign.center,
+                      onChanged: (_) => setLocal(() {}),
+                      decoration:
+                          const InputDecoration(border: OutlineInputBorder()),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: Text(s.t('cancel'))),
+                  FilledButton(
+                    onPressed: matches() ? () => Navigator.pop(ctx, true) : null,
+                    child: Text(s.t('confirm')),
+                  ),
+                ],
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(s.t('cancel'))),
-            FilledButton(
-              onPressed: matches() ? () => Navigator.pop(ctx, true) : null,
-              child: Text(s.t('confirm')),
             ),
-          ],
-        ),
-      ),
-    );
-    return ok == true;
+          ) ==
+          true;
+    } finally {
+      ctrl.dispose(); // تفادي تسرّب المتحكّم عند كل محاولة إيقاف.
+    }
+    return ok;
   }
 
   Future<void> _snooze(BuildContext context, S s) async {
