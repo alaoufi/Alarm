@@ -21,6 +21,10 @@ import 'services/vault_service.dart';
 /// أخطاء التهيئة (إن وُجدت) — لا تمنع إقلاع التطبيق، وتُعرض للمستخدم عند الطلب.
 final List<String> startupErrors = [];
 
+/// هل شاشة المنبّه ظاهرة الآن؟ نمنع تكديس أكثر من واحدة (كلٌّ تملك مشغّل صوت
+/// ومؤقّتًا) كي لا تتراكم الموارد وتُثقل الذاكرة.
+bool _alarmOnScreen = false;
+
 /// تنفّذ خطوة تهيئة بأمان: أي فشل يُسجَّل ولا يُعطّل التطبيق.
 Future<void> _safe(String name, Future<void> Function() step) async {
   try {
@@ -86,13 +90,19 @@ Future<void> main() async {
           MaterialPageRoute(builder: (_) => NoteEditorScreen(noteId: noteId)),
         );
       };
-      // تذكير حرج ⇒ شاشة المنبّه داخل التطبيق (تم الإنجاز/تأجيل).
+      // تذكير حرج ⇒ شاشة المنبّه داخل التطبيق (تم الإنجاز/تأجيل). نمنع تكديس
+      // أكثر من شاشة منبّه: كل شاشة تملك مشغّل صوت ومؤقّتًا خاصًّا، فتكديسها
+      // يُراكم موارد بلا حدّ (سبب استهلاك الذاكرة والتعليق). نسمح بواحدة فقط.
       NotificationService.instance.onAlarm = (info) {
-        appNavigatorKey.currentState?.push(
-          MaterialPageRoute(
-              fullscreenDialog: true,
-              builder: (_) => AlarmScreen(info: info)),
-        );
+        if (_alarmOnScreen) return; // شاشة منبّه ظاهرة أصلًا ⇒ لا تُكدّس أخرى.
+        _alarmOnScreen = true;
+        appNavigatorKey.currentState
+            ?.push(
+              MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => AlarmScreen(info: info)),
+            )
+            .whenComplete(() => _alarmOnScreen = false);
       };
     });
 

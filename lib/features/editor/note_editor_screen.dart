@@ -985,7 +985,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       if (_note.imagePath != null && File(_note.imagePath!).existsSync())
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
-          child: Image.file(File(_note.imagePath!), fit: BoxFit.cover),
+          child: Image.file(File(_note.imagePath!),
+              fit: BoxFit.cover, cacheWidth: 1080),
         )
       else
         _attachButton(s.t('note_image'), Icons.add_photo_alternate, _attachImage),
@@ -1146,6 +1147,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         ),
       ),
     );
+    ctrl.dispose(); // أتلِف متحكّم الوسوم بعد إغلاق الورقة.
   }
 }
 

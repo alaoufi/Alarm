@@ -846,7 +846,8 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
                                                 File(attachmentPath),
                                                 width: 42,
                                                 height: 42,
-                                                fit: BoxFit.cover),
+                                                fit: BoxFit.cover,
+                                                cacheWidth: 96),
                                           ),
                                 title: Text(s.t('rd_invite_attached')),
                                 subtitle: Text(attachmentPath.split('/').last,
@@ -1300,4 +1301,9 @@ Future<void> showStandaloneReminderDialog(BuildContext context,
       );
     },
   );
+  // إغلاق النافذة ⇒ أتلِف المتحكّمات (تفادي تسرّبها عند كل فتح للنافذة).
+  titleCtrl.dispose();
+  doseCtrl.dispose();
+  placeCtrl.dispose();
+  mapLinkCtrl.dispose();
 }

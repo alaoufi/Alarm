@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -75,6 +76,7 @@ class AudioNoteWidget extends StatefulWidget {
 class _AudioNoteWidgetState extends State<AudioNoteWidget> {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<void>? _completeSub;
 
   bool _recording = false;
   bool _playing = false;
@@ -84,13 +86,14 @@ class _AudioNoteWidgetState extends State<AudioNoteWidget> {
   void initState() {
     super.initState();
     _path = widget.existingPath;
-    _player.onPlayerComplete.listen((_) {
+    _completeSub = _player.onPlayerComplete.listen((_) {
       if (mounted) setState(() => _playing = false);
     });
   }
 
   @override
   void dispose() {
+    _completeSub?.cancel();
     _recorder.dispose();
     _player.dispose();
     super.dispose();

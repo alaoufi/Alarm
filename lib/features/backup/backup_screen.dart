@@ -53,30 +53,34 @@ class _BackupScreenState extends State<BackupScreen> {
   Future<String?> _askPassword(String title) async {
     final ctrl = TextEditingController();
     final s = S.of(context);
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: ctrl,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: s.t('backup_password'),
-            helperText: s.t('backup_password_hint'),
+    try {
+      return await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: TextField(
+            controller: ctrl,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: s.t('backup_password'),
+              helperText: s.t('backup_password_hint'),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(s.t('cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, ctrl.text),
+              child: Text(s.t('ok')),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(s.t('cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, ctrl.text),
-            child: Text(s.t('ok')),
-          ),
-        ],
-      ),
-    );
+      );
+    } finally {
+      ctrl.dispose();
+    }
   }
 
   void _toast(String msg) {

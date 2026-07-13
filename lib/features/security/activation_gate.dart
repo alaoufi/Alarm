@@ -148,8 +148,10 @@ class _ActivationScreenState extends State<_ActivationScreen> {
         ],
       ),
     );
+    final seed = ctrl.text;
+    ctrl.dispose(); // أتلِف المتحكّم على كل المسارات بعد إغلاق النافذة.
     if (ok != true) return;
-    final done = await LicenseService.instance.recoverWithOwnerSeed(ctrl.text);
+    final done = await LicenseService.instance.recoverWithOwnerSeed(seed);
     if (!mounted) return;
     if (done) {
       widget.onActivated();

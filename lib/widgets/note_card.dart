@@ -245,7 +245,12 @@ class NoteCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.file(File(note.imagePath!),
-                  height: 120, width: double.infinity, fit: BoxFit.cover),
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  // فكّ الصورة بدقّة العرض فقط (لا بدقّة الكاميرا الكاملة) —
+                  // تفادي فكّ صور بحجم عشرات الميغابايت في الذاكرة.
+                  cacheWidth: 600),
             ),
           );
         }
@@ -257,7 +262,10 @@ class NoteCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.file(File(note.drawingPath!),
-                  height: 120, width: double.infinity, fit: BoxFit.contain),
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.contain,
+                  cacheWidth: 600),
             ),
           );
         }

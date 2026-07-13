@@ -211,6 +211,7 @@ class ManageCategoriesScreen extends StatelessWidget {
         ),
       ),
     );
+    nameCtrl.dispose(); // أتلِف المتحكّم بعد إغلاق النافذة.
   }
 }
 
