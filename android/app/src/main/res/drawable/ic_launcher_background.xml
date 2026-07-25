@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- خلفية كهرمانية متدرّجة لتُبرز جرس التنبيه الأبيض (مميّزة عن "مذكراتي"). -->
+<!-- خلفية «شروق» متدرّجة (كهرماني → مرجاني → ورديّ) لتُبرز جرس التنبيه الأبيض. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -12,8 +12,9 @@
                 android:startX="0" android:startY="0"
                 android:endX="108" android:endY="108"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#FFFFCA28"/>
-                <item android:offset="1.0" android:color="#FFFB8C00"/>
+                <item android:offset="0.0" android:color="#FFFFBA08"/>
+                <item android:offset="0.5" android:color="#FFFB5654"/>
+                <item android:offset="1.0" android:color="#FFD63384"/>
             </gradient>
         </aapt:attr>
     </path>
