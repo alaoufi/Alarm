@@ -8,6 +8,7 @@ import 'core/l10n/app_strings.dart';
 import 'core/theme/app_theme.dart';
 import 'features/security/app_lock_gate.dart';
 import 'features/subscription/subscription_gate.dart';
+import 'features/update/force_update_gate.dart';
 import 'features/settings/settings_provider.dart';
 import 'services/notification_service.dart';
 
@@ -52,7 +53,11 @@ class MudhakkaratiApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: const SubscriptionGate(child: AppLockGate()),
+          // ترتيب البوّابات: التحديث الإلزاميّ أوّلًا (يحجب كل شيء عند توفّر
+          // إصدار أحدث مع وجود إنترنت)، ثم الاشتراك، ثم قفل التطبيق.
+          home: const ForceUpdateGate(
+            child: SubscriptionGate(child: AppLockGate()),
+          ),
         );
       },
     );
