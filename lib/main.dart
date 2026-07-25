@@ -16,6 +16,7 @@ import 'features/reminders/reminders_provider.dart';
 import 'features/settings/settings_provider.dart';
 import 'services/med_dose_logger.dart';
 import 'services/notification_service.dart';
+import 'services/subscription_service.dart';
 import 'services/vault_service.dart';
 
 /// أخطاء التهيئة (إن وُجدت) — لا تمنع إقلاع التطبيق، وتُعرض للمستخدم عند الطلب.
@@ -113,6 +114,10 @@ Future<void> main() async {
 
     final settings = SettingsProvider();
     await _safe('settings', () => settings.load());
+
+    // بوّابة الاشتراك (تجربة 10 أيام ثم اشتراك قوقل بلاي) — تُهيَّأ قبل الواجهة
+    // كي تُعرف حالة الوصول فورًا وتُفعَّل الاشتراكات آليًّا عند الإقلاع.
+    await _safe('subscription', () => SubscriptionService.instance.init());
 
     final notesProvider = NotesProvider(noteRepo, categoryRepo);
     final remindersProvider = RemindersProvider(reminderRepo, noteRepo);

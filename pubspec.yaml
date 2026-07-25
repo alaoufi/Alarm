@@ -66,6 +66,9 @@ dependencies:
   # منتقي ألوان احترافي (للوحة الرسم)
   flutter_colorpicker: ^1.1.0
 
+  # اشتراكات قوقل بلاي (شراء داخل التطبيق)
+  in_app_purchase: ^3.2.0
+
   # Misc
   intl: ^0.20.2
   uuid: ^4.4.0

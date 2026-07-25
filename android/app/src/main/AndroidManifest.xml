@@ -24,6 +24,9 @@
     <!-- موثوقية المنبّه: طلب استثناء التطبيق من توفير البطارية (لمنع قتله) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
+    <!-- اشتراكات قوقل بلاي (الشراء داخل التطبيق) -->
+    <uses-permission android:name="com.android.vending.BILLING"/>
+
     <application
         android:label="Alerts"
         android:name="${applicationName}"

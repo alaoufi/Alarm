@@ -10,6 +10,7 @@ import '../../core/time/hijri_recurrence.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/reminder.dart';
 import '../../services/calendar_export.dart';
+import '../../services/feedback_service.dart';
 import '../../services/med_occurrences.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/ui_kit.dart';
@@ -21,6 +22,7 @@ import '../meds/medication_screen.dart';
 import '../settings/settings_provider.dart';
 import '../settings/settings_screen.dart';
 import '../sounds/sound_library_screen.dart';
+import '../subscription/paywall_screen.dart';
 import 'notification_center_screen.dart';
 import 'reliability_test_screen.dart';
 import 'reminder_defaults_screen.dart';
@@ -355,6 +357,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 }),
                 _drawerTile(context, Icons.settings_outlined, s.t('settings'),
                     () => go(const SettingsScreen())),
+                _drawerTile(context, Icons.workspace_premium_outlined,
+                    s.t('sub_title'), () => go(const PaywallScreen())),
+                _drawerTile(context, Icons.mail_outline, s.t('feedback'), () {
+                  Navigator.pop(context);
+                  FeedbackService.sendEmail(context);
+                }),
                 _drawerTile(context, Icons.privacy_tip_outlined,
                     s.t('privacy_disclaimer'), () => go(const PrivacyScreen())),
               ],
