@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,6 +45,12 @@ class SubscriptionService {
   static const _kFirstLaunch = 'sub_first_launch_ms';
   static const _kSubActive = 'sub_active_cached';
   static const _kLastCheck = 'sub_last_check_ms';
+  static const _kOwnerUnlock = 'owner_unlocked';
+
+  // فتح المالك: بصمة SHA-256 لرمز المطوّر (لا يُخزَّن الرمز نفسه في التطبيق).
+  // يمنح وصولًا دائمًا دون اشتراك — للمطوّر والمختبِرين وأجهزة بلا قوقل بلاي.
+  static const String _ownerHash =
+      '6eb2ab89bbde49045dfd09b6352202e12537a895c7427e91ac81a4889daa7737';
 
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
@@ -62,6 +70,10 @@ class SubscriptionService {
   int _firstLaunchMs = 0;
   bool _subActiveCached = false;
   bool _sawActiveSub = false; // رُصد اشتراك فعّال خلال آخر استرجاع؟
+  bool _ownerUnlocked = false; // فُتح بواسطة رمز المطوّر ⇒ وصول دائم.
+
+  /// هل التطبيق مفتوح دائمًا بواسطة رمز المالك؟
+  bool get isOwnerUnlocked => _ownerUnlocked;
 
   /// أيام التجربة المتبقّية (0 إن انتهت).
   int get trialDaysLeft {
@@ -81,9 +93,20 @@ class SubscriptionService {
   bool get hasAccess => _subActiveCached || _trialActive;
 
   AccessState _compute() {
-    if (_subActiveCached) return AccessState.subscribed;
+    if (_ownerUnlocked || _subActiveCached) return AccessState.subscribed;
     if (_trialActive) return AccessState.trial;
     return AccessState.expired;
+  }
+
+  /// محاولة فتح التطبيق برمز المالك. يعيد true عند نجاح الرمز (وصول دائم).
+  Future<bool> ownerUnlock(String code) async {
+    final hash = sha256.convert(utf8.encode(code.trim())).toString();
+    if (hash != _ownerHash) return false;
+    _ownerUnlocked = true;
+    _publish();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOwnerUnlock, true);
+    return true;
   }
 
   void _publish() => access.value = _compute();
@@ -96,6 +119,7 @@ class SubscriptionService {
       await prefs.setInt(_kFirstLaunch, _firstLaunchMs);
     }
     _subActiveCached = prefs.getBool(_kSubActive) ?? false;
+    _ownerUnlocked = prefs.getBool(_kOwnerUnlock) ?? false;
     _publish();
 
     // قناة الفوترة (قد تكون غير متاحة على أجهزة بلا خدمات قوقل).

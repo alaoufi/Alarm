@@ -40,6 +40,48 @@ class _PaywallScreenState extends State<PaywallScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
+  /// حوار فتح المالك (ضغطة مطوّلة على الشارة). عند نجاح الرمز يُفتح التطبيق دائمًا.
+  Future<void> _ownerUnlockDialog(BuildContext context) async {
+    final s = S.of(context);
+    final ctrl = TextEditingController();
+    String? error;
+    await showDialog<void>(
+      context: context,
+      builder: (dctx) => StatefulBuilder(
+        builder: (dctx, setLocal) => AlertDialog(
+          title: Text(s.t('owner_unlock_title')),
+          content: TextField(
+            controller: ctrl,
+            obscureText: true,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: s.t('owner_unlock_hint'),
+              errorText: error,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dctx),
+              child: Text(s.t('cancel')),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final ok = await _sub.ownerUnlock(ctrl.text);
+                if (!dctx.mounted) return;
+                if (ok) {
+                  Navigator.pop(dctx); // البوّابة تُغلق نفسها عند تغيّر الحالة.
+                } else {
+                  setLocal(() => error = s.t('owner_unlock_bad'));
+                }
+              },
+              child: Text(s.t('unlock')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -70,7 +112,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ),
                   const SizedBox(height: 8),
                   Center(
-                    child: Container(
+                    child: GestureDetector(
+                      // فتح المالك: ضغطة مطوّلة على الشارة تفتح إدخال رمز المطوّر.
+                      onLongPress: () => _ownerUnlockDialog(context),
+                      child: Container(
                       width: 84,
                       height: 84,
                       decoration: BoxDecoration(
@@ -89,6 +134,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       child: const Icon(Icons.workspace_premium,
                           color: Colors.white, size: 44),
+                    ),
                     ),
                   ),
                   const SizedBox(height: 18),

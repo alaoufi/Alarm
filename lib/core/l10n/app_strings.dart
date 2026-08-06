@@ -543,6 +543,10 @@ class S {
     'sub_auto_note':
         'يُفعَّل الاشتراك آليًّا بمجرّد إتمام الدفع من قوقل بلاي. يتجدّد تلقائيًّا ويمكن إلغاؤه في أي وقت من متجر بلاي.',
     'sub_processing': 'جارٍ فتح نافذة الدفع…',
+    'owner_unlock_title': 'فتح المطوّر',
+    'owner_unlock_hint': 'أدخل رمز المطوّر',
+    'owner_unlock_bad': 'رمز غير صحيح',
+    'unlock': 'فتح',
     'feedback': 'راسلنا / إرسال ملاحظات',
     'feedback_desc': 'أرسل ملاحظاتك أو اقتراحاتك للمطوّر عبر البريد',
     'fu_title': 'تحديث مطلوب',
@@ -1063,6 +1067,10 @@ class S {
     'sub_auto_note':
         'Your subscription activates automatically once payment completes on Google Play. It renews automatically and can be cancelled anytime in the Play Store.',
     'sub_processing': 'Opening checkout…',
+    'owner_unlock_title': 'Developer unlock',
+    'owner_unlock_hint': 'Enter developer code',
+    'owner_unlock_bad': 'Invalid code',
+    'unlock': 'Unlock',
     'feedback': 'Contact us / Send feedback',
     'feedback_desc': 'Send your feedback or suggestions to the developer by email',
     'fu_title': 'Update required',
